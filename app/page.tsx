@@ -37,7 +37,6 @@ interface Message {
 }
 
 export default function Home() {
-  const [showLanding, setShowLanding] = useState(true);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
@@ -76,7 +75,7 @@ export default function Home() {
     try {
       const res = await fetch('/api/chat', {
         method: 'POST',
-        headers: { 'Content-[#Type]': 'application/json' },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
           messages: [...messages, userMessage],
           isPro: isPro,
@@ -123,7 +122,115 @@ export default function Home() {
       <div className="absolute top-[-10%] left-1/2 -translate-x-1/2 w-[1000px] h-[650px] bg-gradient-to-tr from-[#d946ef] via-[#8b5cf6] to-[#3b82f6] opacity-35 blur-[160px] pointer-events-none rounded-full" />
       <div className="absolute bottom-[5%] left-1/2 -translate-x-1/2 w-[900px] h-[500px] bg-gradient-to-r from-[#ec4899] via-[#a855f7] to-[#6366f1] opacity-30 blur-[170px] pointer-events-none rounded-full" />
 
-      {/* MODAL PRO */}
+      {/* MODAL PLANOS E PREÇOS */}
+      {showPricingModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
+          <div className="bg-[#120724] border border-[#d946ef]/40 rounded-3xl p-6 md:p-8 max-w-4xl w-full max-h-[90vh] overflow-y-auto relative shadow-[0_0_60px_rgba(217,70,239,0.35)]">
+            <button 
+              onClick={() => setShowPricingModal(false)}
+              className="absolute top-5 right-5 p-2 text-[#d8b4fe] hover:text-white bg-white/5 hover:bg-white/10 rounded-full transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <div className="text-center mb-8">
+              <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-[#d946ef]/20 border border-[#d946ef]/40 text-[#f0abfc] text-xs font-semibold uppercase mb-3">
+                <Crown className="w-3.5 h-3.5 text-amber-400" />
+                <span>Escolha o plano ideal</span>
+              </div>
+              <h2 className="text-3xl md:text-4xl font-extrabold text-white">Desbloqueie todo o poder da IA</h2>
+              <p className="text-[#d8b4fe] text-sm mt-2 max-w-md mx-auto">
+                Evolua da versão gratuita para a versão Pro Studio e crie projetos sem limites de velocidade.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 my-6">
+              {/* Plano Gratuito */}
+              <div className="bg-[#180b30]/80 border border-white/10 rounded-2xl p-6 flex flex-col justify-between hover:border-white/20 transition-all">
+                <div>
+                  <h3 className="text-lg font-bold text-white mb-1">Gratuito Starter</h3>
+                  <p className="text-xs text-[#d8b4fe] mb-4">Ideal para pequenos testes e uso casual</p>
+                  <div className="text-3xl font-black text-white mb-6">R$ 0 <span className="text-xs font-normal text-[#d8b4fe]">/mês</span></div>
+
+                  <ul className="space-y-3 text-xs text-[#e3e3e3] mb-6">
+                    <li className="flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-[#d946ef]" />
+                      <span>Modelo Padrão Build IA 3.6 Flash</span>
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-[#d946ef]" />
+                      <span>Limite diário de requisições</span>
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-[#d946ef]" />
+                      <span>Geração de telas e scripts simples</span>
+                    </li>
+                  </ul>
+                </div>
+
+                <button 
+                  onClick={() => setShowPricingModal(false)}
+                  className="w-full py-3 bg-white/10 hover:bg-white/20 text-white text-xs font-bold rounded-xl transition-colors border border-white/10"
+                >
+                  Plano Atual
+                </button>
+              </div>
+
+              {/* Plano PRO */}
+              <div className="bg-gradient-to-b from-[#250d43] to-[#16072b] border-2 border-[#d946ef] rounded-2xl p-6 flex flex-col justify-between relative shadow-[0_0_30px_rgba(217,70,239,0.3)]">
+                <div className="absolute -top-3 right-6 bg-gradient-to-r from-amber-400 to-amber-600 text-black font-extrabold text-[10px] px-3 py-1 rounded-full uppercase tracking-wider shadow-md">
+                  Recomendado
+                </div>
+
+                <div>
+                  <h3 className="text-lg font-bold text-white mb-1 flex items-center gap-2">
+                    Pro Studio
+                    <Crown className="w-4 h-4 text-amber-400" />
+                  </h3>
+                  <p className="text-xs text-[#d8b4fe] mb-4">Para criadores, desenvolvedores e empresas</p>
+                  <div className="text-3xl font-black text-white mb-6">R$ 49 <span className="text-xs font-normal text-[#d8b4fe]">/mês</span></div>
+
+                  <ul className="space-y-3 text-xs text-[#e3e3e3] mb-6">
+                    <li className="flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-[#f0abfc]" />
+                      <span className="font-semibold text-white">Acesso ao Build IA Pro 4.0 & Claude 3.5</span>
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-[#f0abfc]" />
+                      <span>Geração de código sem restrições</span>
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-[#f0abfc]" />
+                      <span>Exportação completa em .ZIP e GitHub</span>
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-[#f0abfc]" />
+                      <span>Suporte VIP prioritário</span>
+                    </li>
+                  </ul>
+                </div>
+
+                <button 
+                  onClick={handleCheckout}
+                  disabled={checkoutLoading}
+                  className="w-full py-3 bg-gradient-to-r from-[#d946ef] to-[#8b5cf6] hover:opacity-90 text-white text-xs font-bold rounded-xl transition-all shadow-[0_0_20px_rgba(217,70,239,0.5)] flex items-center justify-center gap-2 disabled:opacity-50"
+                >
+                  {checkoutLoading ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <>
+                      <span>Assinar Pro Studio</span>
+                      <ArrowRight className="w-4 h-4" />
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL RECURSOS PRO */}
       {showProFeaturesModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
           <div className="bg-[#120724] border border-[#d946ef]/60 rounded-3xl p-6 md:p-8 max-w-2xl w-full relative shadow-[0_0_60px_rgba(217,70,239,0.4)]">
@@ -207,7 +314,7 @@ export default function Home() {
         </div>
       )}
 
-      {/* Modal Sobre */}
+      {/* MODAL SOBRE */}
       {showAboutModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
           <div className="bg-[#120724] border border-[#d946ef]/40 rounded-3xl p-6 md:p-8 max-w-3xl w-full max-h-[85vh] overflow-y-auto relative shadow-[0_0_60px_rgba(217,70,239,0.35)]">
@@ -241,10 +348,7 @@ export default function Home() {
 
             <div className="flex flex-col sm:flex-row items-center gap-3 pt-2 border-t border-white/10">
               <button 
-                onClick={() => {
-                  setShowAboutModal(false);
-                  setShowLanding(false);
-                }}
+                onClick={() => setShowAboutModal(false)}
                 className="w-full sm:w-1/2 py-3 bg-gradient-to-r from-[#d946ef] to-[#8b5cf6] hover:opacity-90 text-white text-xs font-bold rounded-xl transition-all shadow-[0_0_20px_rgba(217,70,239,0.4)] flex items-center justify-center gap-2"
               >
                 <span>Experimentar Agora</span>
@@ -269,7 +373,7 @@ export default function Home() {
       <header className="w-full max-w-7xl mx-auto flex items-center justify-between px-6 py-4 z-20 sticky top-0 bg-[#07020d]/80 backdrop-blur-md border-b border-white/5">
         <div 
           className="flex items-center gap-2.5 cursor-pointer" 
-          onClick={() => setShowLanding(true)}
+          onClick={() => setMessages([])}
         >
           <div className="p-2 bg-gradient-to-tr from-[#d946ef] to-[#8b5cf6] rounded-xl shadow-[0_0_15px_rgba(217,70,239,0.5)]">
             <Cpu className="w-5 h-5 text-white" />
@@ -295,10 +399,7 @@ export default function Home() {
           </button>
 
           <button 
-            onClick={() => {
-              setShowLanding(false);
-              setInput("Crie uma Dashboard financeira interativa com gráficos");
-            }}
+            onClick={() => setInput("Crie uma Dashboard financeira interativa com gráficos")}
             className="flex items-center gap-1.5 text-xs text-[#d8b4fe] hover:text-white bg-white/5 hover:bg-white/10 px-3.5 py-2 rounded-xl transition-colors border border-white/10"
           >
             <Lightbulb className="w-3.5 h-3.5 text-[#f0abfc]" />
@@ -308,15 +409,17 @@ export default function Home() {
 
         {/* Botões Lado Direito */}
         <div className="flex items-center gap-3">
-          {/* BOTÃO DE SAIR DO CHAT */}
-          <button 
-            onClick={() => setShowLanding(true)}
-            className="flex items-center gap-1.5 bg-red-500/10 hover:bg-red-500/20 text-red-300 border border-red-500/30 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer"
-            title="Sair do Chat e voltar para a tela inicial"
-          >
-            <LogOut className="w-3.5 h-3.5" />
-            <span>Sair</span>
-          </button>
+          {/* BOTÃO SAIR: SÓ EXIBIDO DURANTE O CHAT */}
+          {messages.length > 0 && (
+            <button 
+              onClick={() => setMessages([])}
+              className="flex items-center gap-1.5 bg-red-500/10 hover:bg-red-500/20 text-red-300 border border-red-500/30 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer"
+              title="Sair da conversa"
+            >
+              <LogOut className="w-3.5 h-3.5" />
+              <span>Sair</span>
+            </button>
+          )}
 
           {isPro ? (
             <button 
@@ -339,7 +442,7 @@ export default function Home() {
           <button 
             onClick={() => setMessages([])}
             className="flex items-center gap-1.5 text-xs text-[#d8b4fe] hover:text-white bg-white/5 hover:bg-white/10 px-3 py-2 rounded-xl transition-colors border border-white/10"
-            title="Nova conversa"
+            title="Limpar conversa"
           >
             <RotateCcw className="w-3.5 h-3.5" />
             <span>Limpar</span>
@@ -347,7 +450,7 @@ export default function Home() {
         </div>
       </header>
 
-      {/* Conteúdo da Aplicação */}
+      {/* Conteúdo Central */}
       <main className="flex-1 flex flex-col h-full relative z-10 overflow-hidden">
         <div className="flex-1 overflow-y-auto px-4 flex flex-col items-center justify-center">
           <div className="max-w-3xl w-full">
@@ -376,7 +479,6 @@ export default function Home() {
                       type="button" 
                       onClick={() => setMessages([])}
                       className="text-[#d8b4fe] hover:text-white p-1.5 transition-colors"
-                      title="Nova conversa"
                     >
                       <Plus className="w-5 h-5" />
                     </button>
