@@ -1,63 +1,72 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { 
-  FiZap, FiPlus, FiUser, FiCamera, FiSend, FiX, FiCheckCircle, 
-  FiCrown, FiCopy, FiLogOut, FiLogIn, FiMenu, FiChevronRight 
-} from 'react-icons/fi';
-import { FcGoogle } from 'react-icons/fc';
 
-export default function Home() {
-  const [currentUser, setCurrentUser] = useState<any>(null);
-  const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
+export default function BuildIAPage() {
+  const [currentUser, setCurrentUser] = useState<{ name: string; email: string; isPremium: boolean } | null>(null);
+  const [currentAuthMode, setCurrentAuthMode] = useState<'login' | 'register'>('login');
+  const [messages, setMessages] = useState([
+    { sender: 'ai', text: 'Oi! Tudo bem? Como posso te ajudar hoje?' }
+  ]);
+  const [inputText, setInputText] = useState('');
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  
+  // Modais
+  const [activeModal, setActiveModal] = useState<string | null>(null);
+  
+  // Auth Form State
   const [authEmail, setAuthEmail] = useState('');
   const [authPassword, setAuthPassword] = useState('');
   const [authName, setAuthName] = useState('');
-  
-  const [chatHistory, setChatHistory] = useState<string[]>([]);
-  const [messages, setMessages] = useState<Array<{ sender: 'ai' | 'user', text?: string, image?: string }>>([
-    { sender: 'ai', text: 'Oi! Tudo bem? Como posso te ajudar hoje?' }
-  ]);
-  const [inputMessage, setInputMessage] = useState('');
-  
-  const [isAuthOpen, setIsAuthOpen] = useState(false);
-  const [isPremiumOpen, setIsPremiumOpen] = useState(false);
-  const [isPixOpen, setIsPixOpen] = useState(false);
-  const [isCameraOpen, setIsCameraOpen] = useState(false);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
+  // Refs
   const videoRef = useRef<HTMLVideoElement | null>(null);
-  const [mediaStream, setMediaStream] = useState<MediaStream | null>(null);
+  const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
-  useEffect(() => {
+  const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
   }, [messages]);
 
   const handlePremiumClick = () => {
     if (!currentUser) {
       alert("Você precisa estar logado na sua conta pelo site para assinar o plano premium!");
-      setIsAuthOpen(true);
+      setActiveModal('authModal');
       return;
     }
     if (currentUser.isPremium) {
       alert("Sua conta já possui o Plano Premium ativo!");
       return;
     }
-    setIsPremiumOpen(true);
+    setActiveModal('premiumModal');
+  };
+
+  const sendMessage = () => {
+    if (!inputText.trim()) return;
+    const userText = inputText;
+    setMessages(prev => [...prev, { sender: 'user', text: userText }]);
+    setInputText('');
+
+    setTimeout(() => {
+      setMessages(prev => [...prev, { sender: 'ai', text: `Entendi o que você disse sobre "${userText}". Como prossigo?` }]);
+    }, 600);
   };
 
   const handleAuthSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const name = authMode === 'register' ? (authName || authEmail.split('@')[0]) : authEmail.split('@')[0];
+    const name = currentAuthMode === 'register' ? (authName || authEmail.split('@')[0]) : authEmail.split('@')[0];
     setCurrentUser({ name, email: authEmail, isPremium: false });
-    setIsAuthOpen(false);
-    alert(authMode === 'login' ? 'Login realizado com sucesso!' : 'Conta criada com sucesso!');
+    setActiveModal(null);
+    alert(currentAuthMode === 'login' ? 'Login realizado com sucesso!' : 'Conta criada com sucesso!');
   };
 
   const loginWithGoogle = () => {
     setCurrentUser({ name: 'Usuário Google', email: 'usuario@gmail.com', isPremium: false });
-    setIsAuthOpen(false);
+    setActiveModal(null);
     alert('Autenticado com Google com sucesso!');
   };
 
@@ -72,137 +81,91 @@ export default function Home() {
   };
 
   const simulatePaymentApproval = () => {
-    setIsPixOpen(false);
+    setActiveModal(null);
     if (currentUser) {
       setCurrentUser({ ...currentUser, isPremium: true });
     }
-    alert("Pagamento de R$ 5,99 confirmado com sucesso! O Plano Premium foi ativado automaticamente.");
+    alert("Pagamento de R$ 5,99 confirmado com sucesso! O Plano Premium foi ativado na sua conta.");
   };
 
-  const startCamera = async () => {
-    setIsCameraOpen(true);
+  const openCameraModal = async () => {
+    setActiveModal('cameraModal');
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
-      setMediaStream(stream);
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+      setCameraStream(stream);
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
       }
     } catch (err) {
       alert("Não foi possível acessar a câmera.");
-      setIsCameraOpen(false);
+      setActiveModal(null);
     }
   };
 
-  const stopCamera = () => {
-    if (mediaStream) {
-      mediaStream.getTracks().forEach(track => track.stop());
-      setMediaStream(null);
+  const closeCameraModal = () => {
+    if (cameraStream) {
+      cameraStream.getTracks().forEach(track => track.stop());
+      setCameraStream(null);
     }
-    setIsCameraOpen(false);
-  };
-
-  const capturePhoto = () => {
-    if (videoRef.current) {
-      const canvas = document.createElement('canvas');
-      canvas.width = videoRef.current.videoWidth || 640;
-      canvas.height = videoRef.current.videoHeight || 480;
-      const ctx = canvas.getContext('2d');
-      if (ctx) {
-        ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
-        const dataUrl = canvas.toDataURL('image/png');
-        stopCamera();
-        
-        setMessages(prev => [...prev, { sender: 'user', image: dataUrl }]);
-        setTimeout(() => {
-          setMessages(prev => [...prev, { sender: 'ai', text: 'Recebi sua foto capturada pela câmera! Como posso ajudar em relação a ela?' }]);
-        }, 800);
-      }
-    }
-  };
-
-  const sendMessage = () => {
-    if (!inputMessage.trim()) return;
-    const text = inputMessage;
-    setInputMessage('');
-
-    setMessages(prev => [...prev, { sender: 'user', text }]);
-    setChatHistory(prev => [text, ...prev]);
-
-    setTimeout(() => {
-      setMessages(prev => [
-        ...prev, 
-        { sender: 'ai', text: `Entendi sobre "${text}". Podemos continuar falando normalmente sobre isso ou mudar de assunto quando quiser!` }
-      ]);
-    }, 1000);
+    setActiveModal(null);
   };
 
   return (
     <div style={{ display: 'flex', height: '100vh', backgroundColor: '#0F0E17', color: '#FFFFFF', fontFamily: 'Inter, sans-serif', overflow: 'hidden' }}>
-      
       {/* SIDEBAR */}
-      <aside style={{ width: '280px', backgroundColor: '#161525', borderRight: '1px solid #2A283E', display: 'flex', flexDirection: 'column' }}>
-        <div style={{ padding: '20px', display: 'flex', alignItems: 'center', justifyContent: 'between', borderBottom: '1px solid #2A283E' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontWeight: 700 }}>
-            <div style={{ background: 'linear-gradient(135deg, #7F56D9, #9E77ED)', width: '32px', height: '32px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <FiZap />
-            </div>
+      <aside style={{ width: '280px', backgroundColor: '#161525', borderRight: '1px solid #2A283E', display: 'flex', flexDirection: 'column', zIndex: 100 }}>
+        <div style={{ padding: '20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #2A283E' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontWeight: 700, fontSize: '1.1rem' }}>
+            <div style={{ background: 'linear-gradient(135deg, #7F56D9, #9E77ED)', width: '32px', height: '32px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white' }}>⚡</div>
             <span>Build IA</span>
           </div>
         </div>
 
-        <button onClick={() => setMessages([{ sender: 'ai', text: 'Novo chat iniciado! Como posso ajudar?' }])} style={{ margin: '15px 20px', background: '#7F56D9', color: 'white', border: 'none', padding: '12px', borderRadius: '10px', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
-          <FiPlus /> Novo Chat
+        <button onClick={() => setMessages([{ sender: 'ai', text: 'Novo chat iniciado! Como posso te ajudar?' }])} style={{ margin: '15px 20px', background: '#7F56D9', color: 'white', border: 'none', padding: '12px', borderRadius: '10px', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+          + Novo Chat
         </button>
 
         <div style={{ flex: 1, overflowY: 'auto', padding: '0 10px' }}>
-          <div style={{ fontSize: '0.75rem', color: '#98A2B3', textTransform: 'uppercase', padding: '10px', fontWeight: 600 }}>Histórico</div>
-          {chatHistory.map((item, index) => (
-            <div key={index} onClick={() => setInputMessage(item)} style={{ padding: '10px 12px', borderRadius: '8px', cursor: 'pointer', fontSize: '0.9rem', color: '#98A2B3', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-              {item}
-            </div>
-          ))}
+          <div style={{ fontSize: '0.75rem', color: '#98A2B3', textTransform: 'uppercase', padding: '10px 10px 5px', fontWeight: 600 }}>Hoje</div>
+          <div style={{ padding: '10px 12px', borderRadius: '8px', cursor: 'pointer', fontSize: '0.9rem', color: '#98A2B3' }}>Assistente Inteligente</div>
         </div>
 
         <div style={{ padding: '15px 20px', borderTop: '1px solid #2A283E', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '0.9rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '0.9rem', fontWeight: 500 }}>
             <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: '#3F3D56', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 600 }}>
               {currentUser ? currentUser.name.charAt(0).toUpperCase() : 'U'}
             </div>
-            <span>{currentUser ? `${currentUser.name} ${currentUser.isPremium ? '👑' : ''}` : 'Visitante'}</span>
+            <span>{currentUser ? `${currentUser.name}${currentUser.isPremium ? ' 👑' : ''}` : 'Visitante'}</span>
           </div>
-          <button onClick={() => setIsAuthOpen(true)} style={{ background: 'transparent', border: 'none', color: '#98A2B3', cursor: 'pointer', fontSize: '1.1rem' }}>
-            <FiLogIn />
-          </button>
+          {currentUser ? (
+            <button onClick={logoutUser} style={{ background: '#F04438', border: 'none', color: 'white', padding: '6px 10px', borderRadius: '6px', cursor: 'pointer' }}>Sair</button>
+          ) : (
+            <button onClick={() => setActiveModal('authModal')} style={{ background: '#7F56D9', border: 'none', color: 'white', padding: '6px 10px', borderRadius: '6px', cursor: 'pointer' }}>Entrar</button>
+          )}
         </div>
       </aside>
 
-      {/* ÁREA PRINCIPAL */}
-      <main style={{ flex: 1, display: 'flex', flexDirection: 'column', position: 'relative' }}>
-        
-        <header style={{ padding: '15px 25px', display: 'flex', justifyContent: 'flex-end', gap: '12px', borderBottom: '1px solid #2A283E', background: 'rgba(15, 14, 23, 0.8)' }}>
-          <button onClick={handlePremiumClick} style={{ background: 'linear-gradient(135deg, #F79009, #DC6803)', border: 'none', color: 'white', padding: '8px 16px', borderRadius: '8px', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <FiCrown /> Plano Premium
+      {/* CHAT CONTAINER */}
+      <main style={{ flex: 1, display: 'flex', flexDirection: 'column', backgroundColor: '#0F0E17', position: 'relative' }}>
+        <header style={{ padding: '15px 25px', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '12px', borderBottom: '1px solid #2A283E', background: 'rgba(15, 14, 23, 0.8)' }}>
+          <button onClick={handlePremiumClick} style={{ background: 'linear-gradient(135deg, #F79009, #DC6803)', border: 'none', color: 'white', padding: '8px 16px', borderRadius: '8px', fontWeight: 600, cursor: 'pointer' }}>
+            👑 Plano Premium
           </button>
-          {!currentUser ? (
-            <button onClick={() => setIsAuthOpen(true)} style={{ background: '#161525', border: '1px solid #2A283E', color: 'white', padding: '8px 16px', borderRadius: '8px', cursor: 'pointer' }}>
+          {!currentUser && (
+            <button onClick={() => setActiveModal('authModal')} style={{ background: '#161525', border: '1px solid #2A283E', color: 'white', padding: '8px 16px', borderRadius: '8px', cursor: 'pointer' }}>
               Entrar / Cadastrar
-            </button>
-          ) : (
-            <button onClick={logoutUser} style={{ background: '#F04438', border: 'none', color: 'white', padding: '8px 16px', borderRadius: '8px', cursor: 'pointer' }}>
-              <FiLogOut /> Sair
             </button>
           )}
         </header>
 
         <div style={{ flex: 1, overflowY: 'auto', padding: '30px', display: 'flex', flexDirection: 'column', gap: '20px', maxWidth: '900px', width: '100%', margin: '0 auto' }}>
-          {messages.map((msg, idx) => (
-            <div key={idx} style={{ display: 'flex', gap: '15px', maxWidth: '80%', alignSelf: msg.sender === 'user' ? 'flex-end' : 'flex-start', flexDirection: msg.sender === 'user' ? 'row-reverse' : 'row' }}>
-              <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: msg.sender === 'ai' ? '#7F56D9' : '#3F3D56', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', flexShrink: 0 }}>
-                {msg.sender === 'ai' ? <FiZap /> : <FiUser />}
+          {messages.map((msg, index) => (
+            <div key={index} style={{ display: 'flex', gap: '15px', maxWidth: '80%', alignSelf: msg.sender === 'user' ? 'flex-end' : 'flex-start', flexDirection: msg.sender === 'user' ? 'row-reverse' : 'row' }}>
+              <div style={{ width: '32px', height: '32px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: msg.sender === 'user' ? '#3F3D56' : '#7F56D9', color: 'white', flexShrink: 0 }}>
+                {msg.sender === 'user' ? 'U' : '⚡'}
               </div>
-              <div style={{ padding: '14px 18px', borderRadius: '14px', backgroundColor: msg.sender === 'ai' ? '#161525' : '#7F56D9', border: msg.sender === 'ai' ? '1px solid #2A283E' : 'none', color: 'white' }}>
-                {msg.text && <p>{msg.text}</p>}
-                {msg.image && <img src={msg.image} alt="Captura" style={{ maxWidth: '200px', borderRadius: '8px' }} />}
+              <div style={{ padding: '14px 18px', borderRadius: '14px', fontSize: '0.95rem', lineHeight: '1.5', backgroundColor: msg.sender === 'user' ? '#7F56D9' : '#161525', color: 'white', border: msg.sender === 'ai' ? '1px solid #2A283E' : 'none' }}>
+                {msg.text}
               </div>
             </div>
           ))}
@@ -211,57 +174,53 @@ export default function Home() {
 
         <div style={{ padding: '20px 30px', display: 'flex', justifyContent: 'center' }}>
           <div style={{ maxWidth: '900px', width: '100%', background: '#161525', border: '1px solid #2A283E', borderRadius: '14px', padding: '10px 15px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <button onClick={startCamera} style={{ background: 'transparent', border: 'none', color: '#98A2B3', cursor: 'pointer', fontSize: '1.2rem' }}>
-              <FiCamera />
-            </button>
-            <input 
-              type="text" 
-              value={inputMessage}
-              onChange={(e) => setInputMessage(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
+            <button onClick={openCameraModal} style={{ background: 'transparent', border: 'none', color: '#98A2B3', cursor: 'pointer', fontSize: '1.1rem' }}>📷</button>
+            <textarea 
+              value={inputText}
+              onChange={(e) => setInputText(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } }}
               placeholder="Envie uma mensagem para a Build IA..." 
-              style={{ flex: 1, background: 'transparent', border: 'none', color: 'white', outline: 'none', fontSize: '0.95rem' }} 
+              rows={1}
+              style={{ flex: 1, background: 'transparent', border: 'none', color: 'white', fontSize: '0.95rem', resize: 'none', outline: 'none' }}
             />
-            <button onClick={sendMessage} style={{ background: '#7F56D9', border: 'none', color: 'white', width: '36px', height: '36px', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <FiSend />
-            </button>
+            <button onClick={sendMessage} style={{ background: '#7F56D9', border: 'none', color: 'white', padding: '8px 12px', borderRadius: '8px', cursor: 'pointer' }}>Enviar</button>
           </div>
         </div>
       </main>
 
-      {/* MODAL AUTH */}
-      {isAuthOpen && (
+      {/* MODAL DE AUTENTICAÇÃO */}
+      {activeModal === 'authModal' && (
         <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
-          <div style={{ background: '#161525', border: '1px solid #2A283E', padding: '30px', borderRadius: '20px', width: '100%', maxWidth: '400px', position: 'relative' }}>
-            <button onClick={() => setIsAuthOpen(false)} style={{ position: 'absolute', top: '20px', right: '20px', background: 'transparent', border: 'none', color: '#98A2B3', cursor: 'pointer', fontSize: '1.2rem' }}><FiX /></button>
-            <h2 style={{ textAlign: 'center', marginBottom: '20px' }}>{authMode === 'login' ? 'Entrar na Conta' : 'Cadastre-se'}</h2>
+          <div style={{ background: '#161525', border: '1px solid #2A283E', borderRadius: '20px', width: '100%', maxWidth: '480px', padding: '30px', position: 'relative' }}>
+            <button onClick={() => setActiveModal(null)} style={{ position: 'absolute', top: '20px', right: '20px', background: 'transparent', border: 'none', color: '#98A2B3', cursor: 'pointer', fontSize: '1.2rem' }}>✕</button>
+            <h2 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '8px', textAlign: 'center' }}>Acesse sua conta</h2>
             
-            <div style={{ display: 'flex', background: '#0F0E17', borderRadius: '10px', padding: '4px', marginBottom: '20px' }}>
-              <button onClick={() => setAuthMode('login')} style={{ flex: 1, background: authMode === 'login' ? '#161525' : 'transparent', color: 'white', border: 'none', padding: '10px', borderRadius: '8px', cursor: 'pointer' }}>Entrar</button>
-              <button onClick={() => setAuthMode('register')} style={{ flex: 1, background: authMode === 'register' ? '#161525' : 'transparent', color: 'white', border: 'none', padding: '10px', borderRadius: '8px', cursor: 'pointer' }}>Cadastrar</button>
+            <div style={{ display: 'flex', background: '#0F0E17', borderRadius: '10px', padding: '4px', margin: '20px 0' }}>
+              <button onClick={() => setCurrentAuthMode('login')} style={{ flex: 1, background: currentAuthMode === 'login' ? '#161525' : 'transparent', border: 'none', color: 'white', padding: '10px', borderRadius: '8px', cursor: 'pointer' }}>Entrar</button>
+              <button onClick={() => setCurrentAuthMode('register')} style={{ flex: 1, background: currentAuthMode === 'register' ? '#161525' : 'transparent', border: 'none', color: 'white', padding: '10px', borderRadius: '8px', cursor: 'pointer' }}>Cadastrar</button>
             </div>
 
-            <button onClick={loginWithGoogle} style={{ width: '100%', background: 'white', color: '#111', border: 'none', padding: '12px', borderRadius: '10px', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', marginBottom: '20px' }}>
-              <FcGoogle size={20} /> Continuar com Google
+            <button onClick={loginWithGoogle} style={{ width: '100%', background: 'white', color: '#111', border: 'none', padding: '12px', borderRadius: '10px', fontWeight: 600, cursor: 'pointer', marginBottom: '15px' }}>
+              Continuar com o Google
             </button>
 
             <form onSubmit={handleAuthSubmit}>
-              {authMode === 'register' && (
+              {currentAuthMode === 'register' && (
                 <div style={{ marginBottom: '15px' }}>
-                  <label style={{ display: 'block', fontSize: '0.85rem', marginBottom: '5px' }}>Nome</label>
-                  <input type="text" value={authName} onChange={(e) => setAuthName(e.target.value)} style={{ width: '100%', background: '#0F0E17', border: '1px solid #2A283E', padding: '10px', borderRadius: '8px', color: 'white' }} />
+                  <label style={{ display: 'block', fontSize: '0.85rem', marginBottom: '6px' }}>Nome Completo</label>
+                  <input type="text" value={authName} onChange={(e) => setAuthName(e.target.value)} style={{ width: '100%', background: '#0F0E17', border: '1px solid #2A283E', padding: '12px', borderRadius: '10px', color: 'white', outline: 'none' }} placeholder="Seu nome" />
                 </div>
               )}
               <div style={{ marginBottom: '15px' }}>
-                <label style={{ display: 'block', fontSize: '0.85rem', marginBottom: '5px' }}>E-mail</label>
-                <input type="email" required value={authEmail} onChange={(e) => setAuthEmail(e.target.value)} style={{ width: '100%', background: '#0F0E17', border: '1px solid #2A283E', padding: '10px', borderRadius: '8px', color: 'white' }} />
+                <label style={{ display: 'block', fontSize: '0.85rem', marginBottom: '6px' }}>E-mail</label>
+                <input type="email" value={authEmail} onChange={(e) => setAuthEmail(e.target.value)} required style={{ width: '100%', background: '#0F0E17', border: '1px solid #2A283E', padding: '12px', borderRadius: '10px', color: 'white', outline: 'none' }} placeholder="seu@email.com" />
               </div>
               <div style={{ marginBottom: '20px' }}>
-                <label style={{ display: 'block', fontSize: '0.85rem', marginBottom: '5px' }}>Senha</label>
-                <input type="password" required value={authPassword} onChange={(e) => setAuthPassword(e.target.value)} style={{ width: '100%', background: '#0F0E17', border: '1px solid #2A283E', padding: '10px', borderRadius: '8px', color: 'white' }} />
+                <label style={{ display: 'block', fontSize: '0.85rem', marginBottom: '6px' }}>Senha</label>
+                <input type="password" value={authPassword} onChange={(e) => setAuthPassword(e.target.value)} required style={{ width: '100%', background: '#0F0E17', border: '1px solid #2A283E', padding: '12px', borderRadius: '10px', color: 'white', outline: 'none' }} placeholder="••••••••" />
               </div>
               <button type="submit" style={{ width: '100%', background: '#7F56D9', color: 'white', border: 'none', padding: '12px', borderRadius: '10px', fontWeight: 600, cursor: 'pointer' }}>
-                {authMode === 'login' ? 'Entrar' : 'Criar Conta'}
+                {currentAuthMode === 'login' ? 'Entrar' : 'Criar Conta'}
               </button>
             </form>
           </div>
@@ -269,45 +228,34 @@ export default function Home() {
       )}
 
       {/* MODAL PREMIUM */}
-      {isPremiumOpen && (
+      {activeModal === 'premiumModal' && (
         <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
-          <div style={{ background: '#161525', border: '1px solid #2A283E', padding: '30px', borderRadius: '20px', width: '100%', maxWidth: '480px', position: 'relative' }}>
-            <button onClick={() => setIsPremiumOpen(false)} style={{ position: 'absolute', top: '20px', right: '20px', background: 'transparent', border: 'none', color: '#98A2B3', cursor: 'pointer', fontSize: '1.2rem' }}><FiX /></button>
-            <h2 style={{ textAlign: 'center', marginBottom: '10px' }}><FiCrown color="#F79009" /> Seja Premium</h2>
-            <p style={{ textAlign: 'center', color: '#98A2B3', marginBottom: '20px', fontSize: '0.9rem' }}>Desbloqueie recursos avançados por apenas R$ 5,99/mês</p>
-            
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '20px', fontSize: '0.9rem' }}>
-              <div><FiCheckCircle color="#12B76A" /> Acesso ilimitado à inteligência artificial</div>
-              <div><FiCheckCircle color="#12B76A" /> Respostas prioritárias ultrarrápidas</div>
-              <div><FiCheckCircle color="#12B76A" /> Análise avançada de fotos e câmera</div>
-              <div><FiCheckCircle color="#12B76A" /> Histórico completo salvo na nuvem</div>
-              <div><FiCheckCircle color="#12B76A" /> Suporte VIP dedicado 24/7</div>
+          <div style={{ background: '#161525', border: '1px solid #2A283E', borderRadius: '20px', width: '100%', maxWidth: '480px', padding: '30px', position: 'relative' }}>
+            <button onClick={() => setActiveModal(null)} style={{ position: 'absolute', top: '20px', right: '20px', background: 'transparent', border: 'none', color: '#98A2B3', cursor: 'pointer', fontSize: '1.2rem' }}>✕</button>
+            <h2 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '8px', textAlign: 'center' }}>👑 Seja Premium</h2>
+            <div style={{ textAlign: 'center', background: '#0F0E17', border: '1px solid #2A283E', padding: '15px', borderRadius: '12px', margin: '20px 0' }}>
+              <span style={{ fontSize: '1.8rem', fontWeight: 700, color: '#F79009' }}>R$ 5,99</span> / mês
             </div>
-
-            <button onClick={() => { setIsPremiumOpen(false); setIsPixOpen(true); }} style={{ width: '100%', background: 'linear-gradient(135deg, #F79009, #DC6803)', color: 'white', border: 'none', padding: '12px', borderRadius: '10px', fontWeight: 600, cursor: 'pointer' }}>
-              Assinar por R$ 5,99 via PIX
+            <button onClick={() => setActiveModal('pixModal')} style={{ width: '100%', background: 'linear-gradient(135deg, #F79009, #DC6803)', color: 'white', border: 'none', padding: '12px', borderRadius: '10px', fontWeight: 600, cursor: 'pointer' }}>
+              Assinar Agora por R$ 5,99
             </button>
           </div>
         </div>
       )}
 
       {/* MODAL PIX */}
-      {isPixOpen && (
+      {activeModal === 'pixModal' && (
         <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
-          <div style={{ background: '#161525', border: '1px solid #2A283E', padding: '30px', borderRadius: '20px', width: '100%', maxWidth: '400px', textAlign: 'center', position: 'relative' }}>
-            <button onClick={() => setIsPixOpen(false)} style={{ position: 'absolute', top: '20px', right: '20px', background: 'transparent', border: 'none', color: '#98A2B3', cursor: 'pointer', fontSize: '1.2rem' }}><FiX /></button>
-            <h2 style={{ marginBottom: '10px' }}>Pagamento PIX</h2>
-            <p style={{ color: '#98A2B3', fontSize: '0.9rem', marginBottom: '20px' }}>Escaneie ou copie a chave para pagar R$ 5,99</p>
-
-            <div style={{ background: 'white', padding: '10px', borderRadius: '10px', display: 'inline-block', marginBottom: '15px' }}>
-              <img src="https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=00020126580014br.gov.bcb.pix0136140132e5-561a-41eb-bf1f-b84592f0fc870204059953039865802BR5925Build%20IA%20Assinatura6009Sao%20Paulo62070503***6304" alt="QR Code Pix" />
+          <div style={{ background: '#161525', border: '1px solid #2A283E', borderRadius: '20px', width: '100%', maxWidth: '480px', padding: '30px', position: 'relative', textAlign: 'center' }}>
+            <button onClick={() => setActiveModal(null)} style={{ position: 'absolute', top: '20px', right: '20px', background: 'transparent', border: 'none', color: '#98A2B3', cursor: 'pointer', fontSize: '1.2rem' }}>✕</button>
+            <h2 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '15px' }}>Pagamento via PIX</h2>
+            <div style={{ background: 'white', width: '160px', height: '160px', margin: '0 auto 15px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '10px' }}>
+              <img src="https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=00020126580014br.gov.bcb.pix0136140132e5-561a-41eb-bf1f-b84592f0fc870204059953039865802BR5925Build%20IA%20Assinatura6009Sao%20Paulo62070503***6304" alt="QR Code Pix" style={{ maxWidth: '100%' }} />
             </div>
-
-            <div style={{ background: '#0F0E17', padding: '10px', borderRadius: '8px', fontSize: '0.8rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px', wordBreak: 'break-all' }}>
-              <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>140132e5-561a-41eb-bf1f-b84592f0fc87</span>
-              <button onClick={copyPixKey} style={{ background: '#7F56D9', color: 'white', border: 'none', padding: '5px 10px', borderRadius: '5px', cursor: 'pointer' }}><FiCopy /></button>
+            <div style={{ background: '#0F0E17', border: '1px solid #2A283E', padding: '10px 15px', borderRadius: '8px', fontSize: '0.85rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
+              <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>140132e5-561a-41eb-bf1f-b84592f0fc87</span>
+              <button onClick={copyPixKey} style={{ background: '#7F56D9', color: 'white', border: 'none', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer' }}>Copiar</button>
             </div>
-
             <button onClick={simulatePaymentApproval} style={{ width: '100%', background: '#12B76A', color: 'white', border: 'none', padding: '12px', borderRadius: '10px', fontWeight: 600, cursor: 'pointer' }}>
               Simular Pagamento Realizado
             </button>
@@ -316,21 +264,18 @@ export default function Home() {
       )}
 
       {/* MODAL CÂMERA */}
-      {isCameraOpen && (
-        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
-          <div style={{ background: '#161525', border: '1px solid #2A283E', padding: '20px', borderRadius: '20px', width: '100%', maxWidth: '500px', textAlign: 'center' }}>
-            <h2 style={{ marginBottom: '15px' }}>Tirar Foto</h2>
-            <div style={{ width: '100%', height: '300px', background: 'black', borderRadius: '10px', overflow: 'hidden', marginBottom: '15px' }}>
+      {activeModal === 'cameraModal' && (
+        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+          <div style={{ background: '#161525', border: '1px solid #2A283E', borderRadius: '20px', width: '100%', maxWidth: '540px', padding: '30px', position: 'relative' }}>
+            <button onClick={closeCameraModal} style={{ position: 'absolute', top: '20px', right: '20px', background: 'transparent', border: 'none', color: '#98A2B3', cursor: 'pointer', fontSize: '1.2rem' }}>✕</button>
+            <h2 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '15px', textAlign: 'center' }}>Tirar Foto</h2>
+            <div style={{ width: '100%', height: '300px', background: 'black', borderRadius: '12px', overflow: 'hidden', marginBottom: '20px' }}>
               <video ref={videoRef} autoPlay playsInline style={{ width: '100%', height: '100%', objectFit: 'cover' }}></video>
             </div>
-            <div style={{ display: 'flex', gap: '10px' }}>
-              <button onClick={stopCamera} style={{ flex: 1, background: '#0F0E17', border: '1px solid #2A283E', color: 'white', padding: '10px', borderRadius: '8px', cursor: 'pointer' }}>Cancelar</button>
-              <button onClick={capturePhoto} style={{ flex: 1, background: '#7F56D9', color: 'white', border: 'none', padding: '10px', borderRadius: '8px', cursor: 'pointer' }}>Capturar</button>
-            </div>
+            <button onClick={closeCameraModal} style={{ width: '100%', background: '#7F56D9', color: 'white', border: 'none', padding: '12px', borderRadius: '10px', fontWeight: 600, cursor: 'pointer' }}>Fechar Câmera</button>
           </div>
         </div>
       )}
-
     </div>
   );
 }
