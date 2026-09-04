@@ -1,542 +1,336 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
-  Sparkles, 
-  Send, 
-  User, 
-  Plus, 
-  Mic,
-  Cpu,
-  ArrowRight,
-  Zap,
-  Code2,
-  Layers,
-  CheckCircle2,
-  X,
-  CreditCard,
-  RotateCcw,
-  BookOpen,
-  Lightbulb,
-  Info,
-  Globe,
-  Rocket,
-  ShieldCheck,
-  Loader2,
-  Crown,
-  Download,
-  Sliders,
-  GitBranch,
-  Headphones,
-  LogOut
-} from 'lucide-react';
-
-interface Message {
-  role: 'user' | 'assistant';
-  content: string;
-}
+  FiZap, FiPlus, FiUser, FiCamera, FiSend, FiX, FiCheckCircle, 
+  FiCrown, FiCopy, FiLogOut, FiLogIn, FiMenu, FiChevronRight 
+} from 'react-icons/fi';
+import { FcGoogle } from 'react-icons/fc';
 
 export default function Home() {
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [input, setInput] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [checkoutLoading, setCheckoutLoading] = useState(false);
+  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
+  const [authEmail, setAuthEmail] = useState('');
+  const [authPassword, setAuthPassword] = useState('');
+  const [authName, setAuthName] = useState('');
   
-  // Modais
-  const [showPricingModal, setShowPricingModal] = useState(false);
-  const [showAboutModal, setShowAboutModal] = useState(false);
-  const [showProFeaturesModal, setShowProFeaturesModal] = useState(false);
+  const [chatHistory, setChatHistory] = useState<string[]>([]);
+  const [messages, setMessages] = useState<Array<{ sender: 'ai' | 'user', text?: string, image?: string }>>([
+    { sender: 'ai', text: 'Oi! Tudo bem? Como posso te ajudar hoje?' }
+  ]);
+  const [inputMessage, setInputMessage] = useState('');
+  
+  const [isAuthOpen, setIsAuthOpen] = useState(false);
+  const [isPremiumOpen, setIsPremiumOpen] = useState(false);
+  const [isPixOpen, setIsPixOpen] = useState(false);
+  const [isCameraOpen, setIsCameraOpen] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
-  // Estado do Plano
-  const [isPro, setIsPro] = useState(false);
-  const [selectedModel, setSelectedModel] = useState('Build IA 3.6 Flash');
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const [mediaStream, setMediaStream] = useState<MediaStream | null>(null);
+  const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const query = new URLSearchParams(window.location.search);
-      if (query.get('success') === 'true') {
-        setIsPro(true);
-        setSelectedModel('Build IA Pro 4.0 Turbo');
-        alert('🎉 Parabéns! Sua assinatura do Plano Pro Studio foi ativada com sucesso!');
-        window.history.replaceState({}, document.title, window.location.pathname);
-      }
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
+
+  const handlePremiumClick = () => {
+    if (!currentUser) {
+      alert("Você precisa estar logado na sua conta pelo site para assinar o plano premium!");
+      setIsAuthOpen(true);
+      return;
     }
-  }, []);
+    if (currentUser.isPremium) {
+      alert("Sua conta já possui o Plano Premium ativo!");
+      return;
+    }
+    setIsPremiumOpen(true);
+  };
 
-  const handleSubmit = async (textToSend?: string) => {
-    const query = textToSend || input;
-    if (!query.trim() || loading) return;
+  const handleAuthSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const name = authMode === 'register' ? (authName || authEmail.split('@')[0]) : authEmail.split('@')[0];
+    setCurrentUser({ name, email: authEmail, isPremium: false });
+    setIsAuthOpen(false);
+    alert(authMode === 'login' ? 'Login realizado com sucesso!' : 'Conta criada com sucesso!');
+  };
 
-    const userMessage: Message = { role: 'user', content: query };
-    setMessages((prev) => [...prev, userMessage]);
-    if (!textToSend) setInput('');
-    setLoading(true);
+  const loginWithGoogle = () => {
+    setCurrentUser({ name: 'Usuário Google', email: 'usuario@gmail.com', isPremium: false });
+    setIsAuthOpen(false);
+    alert('Autenticado com Google com sucesso!');
+  };
 
+  const logoutUser = () => {
+    setCurrentUser(null);
+    alert('Você saiu da sua conta.');
+  };
+
+  const copyPixKey = () => {
+    navigator.clipboard.writeText("140132e5-561a-41eb-bf1f-b84592f0fc87");
+    alert("Chave Pix copiada para a área de transferência!");
+  };
+
+  const simulatePaymentApproval = () => {
+    setIsPixOpen(false);
+    if (currentUser) {
+      setCurrentUser({ ...currentUser, isPremium: true });
+    }
+    alert("Pagamento de R$ 5,99 confirmado com sucesso! O Plano Premium foi ativado automaticamente.");
+  };
+
+  const startCamera = async () => {
+    setIsCameraOpen(true);
     try {
-      const res = await fetch('/api/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          messages: [...messages, userMessage],
-          isPro: isPro,
-          model: selectedModel 
-        }),
-      });
-
-      const data = await res.json();
-      setMessages((prev) => [
-        ...prev,
-        { role: 'assistant', content: data.content },
-      ]);
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setLoading(false);
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+      setMediaStream(stream);
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+      }
+    } catch (err) {
+      alert("Não foi possível acessar a câmera.");
+      setIsCameraOpen(false);
     }
   };
 
-  const handleCheckout = async () => {
-    setCheckoutLoading(true);
-    try {
-      const res = await fetch('/api/checkout', {
-        method: 'POST',
-      });
-      const data = await res.json();
-
-      if (data.url) {
-        window.location.href = data.url;
-      } else {
-        alert('Erro ao redirecionar para o pagamento.');
-      }
-    } catch (err) {
-      console.error(err);
-      alert('Ocorreu um erro ao processar o pagamento.');
-    } finally {
-      setCheckoutLoading(false);
+  const stopCamera = () => {
+    if (mediaStream) {
+      mediaStream.getTracks().forEach(track => track.stop());
+      setMediaStream(null);
     }
+    setIsCameraOpen(false);
+  };
+
+  const capturePhoto = () => {
+    if (videoRef.current) {
+      const canvas = document.createElement('canvas');
+      canvas.width = videoRef.current.videoWidth || 640;
+      canvas.height = videoRef.current.videoHeight || 480;
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
+        const dataUrl = canvas.toDataURL('image/png');
+        stopCamera();
+        
+        setMessages(prev => [...prev, { sender: 'user', image: dataUrl }]);
+        setTimeout(() => {
+          setMessages(prev => [...prev, { sender: 'ai', text: 'Recebi sua foto capturada pela câmera! Como posso ajudar em relação a ela?' }]);
+        }, 800);
+      }
+    }
+  };
+
+  const sendMessage = () => {
+    if (!inputMessage.trim()) return;
+    const text = inputMessage;
+    setInputMessage('');
+
+    setMessages(prev => [...prev, { sender: 'user', text }]);
+    setChatHistory(prev => [text, ...prev]);
+
+    setTimeout(() => {
+      setMessages(prev => [
+        ...prev, 
+        { sender: 'ai', text: `Entendi sobre "${text}". Podemos continuar falando normalmente sobre isso ou mudar de assunto quando quiser!` }
+      ]);
+    }, 1000);
   };
 
   return (
-    <div className="min-h-screen bg-[#07020d] text-[#e3e3e3] font-sans antialiased relative overflow-x-hidden flex flex-col justify-between">
-      {/* Background Mesh Gradient */}
-      <div className="absolute top-[-10%] left-1/2 -translate-x-1/2 w-[1000px] h-[650px] bg-gradient-to-tr from-[#d946ef] via-[#8b5cf6] to-[#3b82f6] opacity-35 blur-[160px] pointer-events-none rounded-full" />
-      <div className="absolute bottom-[5%] left-1/2 -translate-x-1/2 w-[900px] h-[500px] bg-gradient-to-r from-[#ec4899] via-[#a855f7] to-[#6366f1] opacity-30 blur-[170px] pointer-events-none rounded-full" />
-
-      {/* MODAL PLANOS E PREÇOS (R$ 5,99) */}
-      {showPricingModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
-          <div className="bg-[#120724] border border-[#d946ef]/40 rounded-3xl p-6 md:p-8 max-w-4xl w-full max-h-[90vh] overflow-y-auto relative shadow-[0_0_60px_rgba(217,70,239,0.35)]">
-            <button 
-              onClick={() => setShowPricingModal(false)}
-              className="absolute top-5 right-5 p-2 text-[#d8b4fe] hover:text-white bg-white/5 hover:bg-white/10 rounded-full transition-colors"
-            >
-              <X className="w-5 h-5" />
-            </button>
-
-            <div className="text-center mb-8">
-              <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-[#d946ef]/20 border border-[#d946ef]/40 text-[#f0abfc] text-xs font-semibold uppercase mb-3">
-                <Crown className="w-3.5 h-3.5 text-amber-400" />
-                <span>Escolha o plano ideal</span>
-              </div>
-              <h2 className="text-3xl md:text-4xl font-extrabold text-white">Desbloqueie todo o poder da IA</h2>
-              <p className="text-[#d8b4fe] text-sm mt-2 max-w-md mx-auto">
-                Evolua da versão gratuita para a versão Pro Studio e crie projetos sem limites.
-              </p>
+    <div style={{ display: 'flex', height: '100vh', backgroundColor: '#0F0E17', color: '#FFFFFF', fontFamily: 'Inter, sans-serif', overflow: 'hidden' }}>
+      
+      {/* SIDEBAR */}
+      <aside style={{ width: '280px', backgroundColor: '#161525', borderRight: '1px solid #2A283E', display: 'flex', flexDirection: 'column' }}>
+        <div style={{ padding: '20px', display: 'flex', alignItems: 'center', justifyContent: 'between', borderBottom: '1px solid #2A283E' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontWeight: 700 }}>
+            <div style={{ background: 'linear-gradient(135deg, #7F56D9, #9E77ED)', width: '32px', height: '32px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <FiZap />
             </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 my-6">
-              {/* Plano Gratuito */}
-              <div className="bg-[#180b30]/80 border border-white/10 rounded-2xl p-6 flex flex-col justify-between hover:border-white/20 transition-all">
-                <div>
-                  <h3 className="text-lg font-bold text-white mb-1">Gratuito Starter</h3>
-                  <p className="text-xs text-[#d8b4fe] mb-4">Ideal para pequenos testes e uso casual</p>
-                  <div className="text-3xl font-black text-white mb-6">R$ 0 <span className="text-xs font-normal text-[#d8b4fe]">/mês</span></div>
-
-                  <ul className="space-y-3 text-xs text-[#e3e3e3] mb-6">
-                    <li className="flex items-center gap-2">
-                      <CheckCircle2 className="w-4 h-4 text-[#d946ef]" />
-                      <span>Modelo Padrão Build IA 3.6 Flash</span>
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <CheckCircle2 className="w-4 h-4 text-[#d946ef]" />
-                      <span>Limite diário de requisições</span>
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <CheckCircle2 className="w-4 h-4 text-[#d946ef]" />
-                      <span>Geração de telas e scripts simples</span>
-                    </li>
-                  </ul>
-                </div>
-
-                <button 
-                  onClick={() => setShowPricingModal(false)}
-                  className="w-full py-3 bg-white/10 hover:bg-white/20 text-white text-xs font-bold rounded-xl transition-colors border border-white/10"
-                >
-                  Plano Atual
-                </button>
-              </div>
-
-              {/* Plano PRO R$ 5,99 */}
-              <div className="bg-gradient-to-b from-[#250d43] to-[#16072b] border-2 border-[#d946ef] rounded-2xl p-6 flex flex-col justify-between relative shadow-[0_0_30px_rgba(217,70,239,0.3)]">
-                <div className="absolute -top-3 right-6 bg-gradient-to-r from-amber-400 to-amber-600 text-black font-extrabold text-[10px] px-3 py-1 rounded-full uppercase tracking-wider shadow-md">
-                  Recomendado
-                </div>
-
-                <div>
-                  <h3 className="text-lg font-bold text-white mb-1 flex items-center gap-2">
-                    Pro Studio
-                    <Crown className="w-4 h-4 text-amber-400" />
-                  </h3>
-                  <p className="text-xs text-[#d8b4fe] mb-4">Para criadores e desenvolvedores</p>
-                  <div className="text-3xl font-black text-white mb-6">R$ 5,99 <span className="text-xs font-normal text-[#d8b4fe]">/mês</span></div>
-
-                  <ul className="space-y-3 text-xs text-[#e3e3e3] mb-6">
-                    <li className="flex items-center gap-2">
-                      <CheckCircle2 className="w-4 h-4 text-[#f0abfc]" />
-                      <span className="font-semibold text-white">Acesso ao Build IA Pro 4.0 Turbo</span>
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <CheckCircle2 className="w-4 h-4 text-[#f0abfc]" />
-                      <span>Geração de código sem restrições</span>
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <CheckCircle2 className="w-4 h-4 text-[#f0abfc]" />
-                      <span>Exportação completa em .ZIP e GitHub</span>
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <CheckCircle2 className="w-4 h-4 text-[#f0abfc]" />
-                      <span>Suporte VIP prioritário</span>
-                    </li>
-                  </ul>
-                </div>
-
-                <button 
-                  onClick={handleCheckout}
-                  disabled={checkoutLoading}
-                  className="w-full py-3 bg-gradient-to-r from-[#d946ef] to-[#8b5cf6] hover:opacity-90 text-white text-xs font-bold rounded-xl transition-all shadow-[0_0_20px_rgba(217,70,239,0.5)] flex items-center justify-center gap-2 disabled:opacity-50"
-                >
-                  {checkoutLoading ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : (
-                    <>
-                      <span>Assinar por R$ 5,99/mês</span>
-                      <ArrowRight className="w-4 h-4" />
-                    </>
-                  )}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* MODAL RECURSOS PRO */}
-      {showProFeaturesModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
-          <div className="bg-[#120724] border border-[#d946ef]/60 rounded-3xl p-6 md:p-8 max-w-2xl w-full relative shadow-[0_0_60px_rgba(217,70,239,0.4)]">
-            <button 
-              onClick={() => setShowProFeaturesModal(false)}
-              className="absolute top-5 right-5 p-2 text-[#d8b4fe] hover:text-white bg-white/5 hover:bg-white/10 rounded-full transition-colors"
-            >
-              <X className="w-5 h-5" />
-            </button>
-
-            <div className="text-center mb-6">
-              <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-[#d946ef]/20 border border-[#d946ef]/40 text-[#f0abfc] text-xs font-semibold uppercase mb-3">
-                <Crown className="w-3.5 h-3.5 text-amber-400" />
-                <span>Painel Pro Studio Exclusivo</span>
-              </div>
-              <h2 className="text-2xl md:text-3xl font-extrabold text-white">Seus Recursos Premium Ativos</h2>
-              <p className="text-[#d8b4fe] text-xs mt-1">Aproveite ao máximo a IA com privilégios de assinante Pro.</p>
-            </div>
-
-            <div className="space-y-4 my-6">
-              <div className="p-4 bg-[#1a0a33] border border-[#d946ef]/30 rounded-2xl flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <Sliders className="w-5 h-5 text-[#f0abfc]" />
-                  <div>
-                    <h4 className="text-xs font-bold text-white">Modelo de IA Selecionado</h4>
-                    <p className="text-[11px] text-[#d8b4fe]">Alterne entre os motores de inteligência disponíveis</p>
-                  </div>
-                </div>
-                <select 
-                  value={selectedModel}
-                  onChange={(e) => setSelectedModel(e.target.value)}
-                  className="bg-[#2a1249] text-white text-xs border border-[#d946ef]/40 rounded-xl px-3 py-2 outline-none cursor-pointer"
-                >
-                  <option value="Build IA Pro 4.0 Turbo">Build IA Pro 4.0 Turbo</option>
-                  <option value="Claude 3.5 Sonnet Integration">Claude 3.5 Sonnet Integration</option>
-                  <option value="Build IA 3.6 Flash">Build IA 3.6 Flash (Padrão)</option>
-                </select>
-              </div>
-
-              <div className="p-4 bg-[#1a0a33] border border-[#d946ef]/30 rounded-2xl flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <Download className="w-5 h-5 text-[#f0abfc]" />
-                  <div>
-                    <h4 className="text-xs font-bold text-white">Exportação Completa de Projetos</h4>
-                    <p className="text-[11px] text-[#d8b4fe]">Baixe o código-fonte em .ZIP ou suba no GitHub em 1 clique</p>
-                  </div>
-                </div>
-                <button 
-                  onClick={() => alert('Download do projeto gerado iniciado em .ZIP')}
-                  className="bg-gradient-to-r from-[#d946ef] to-[#8b5cf6] text-white text-xs font-semibold px-3.5 py-2 rounded-xl flex items-center gap-1.5"
-                >
-                  <GitBranch className="w-3.5 h-3.5" />
-                  <span>Exportar</span>
-                </button>
-              </div>
-
-              <div className="p-4 bg-[#1a0a33] border border-[#d946ef]/30 rounded-2xl flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <Headphones className="w-5 h-5 text-[#f0abfc]" />
-                  <div>
-                    <h4 className="text-xs font-bold text-white">Suporte Prioritário VIP</h4>
-                    <p className="text-[11px] text-[#d8b4fe]">Atendimento exclusivo com resposta rápida</p>
-                  </div>
-                </div>
-                <a 
-                  href="mailto:suporte@buildia.com"
-                  className="bg-white/10 hover:bg-white/20 text-white text-xs font-semibold px-3.5 py-2 rounded-xl border border-white/10"
-                >
-                  Contato VIP
-                </a>
-              </div>
-            </div>
-
-            <button 
-              onClick={() => setShowProFeaturesModal(false)}
-              className="w-full py-3 bg-white/10 hover:bg-white/20 text-white text-xs font-bold rounded-xl transition-colors"
-            >
-              Fechar Painel Pro
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* MODAL SOBRE */}
-      {showAboutModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
-          <div className="bg-[#120724] border border-[#d946ef]/40 rounded-3xl p-6 md:p-8 max-w-3xl w-full max-h-[85vh] overflow-y-auto relative shadow-[0_0_60px_rgba(217,70,239,0.35)]">
-            <button 
-              onClick={() => setShowAboutModal(false)}
-              className="absolute top-5 right-5 p-2 text-[#d8b4fe] hover:text-white bg-white/5 hover:bg-white/10 rounded-full transition-colors"
-            >
-              <X className="w-5 h-5" />
-            </button>
-
-            <div className="text-center mb-8">
-              <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-[#d946ef]/20 border border-[#d946ef]/40 text-[#f0abfc] text-xs font-semibold uppercase mb-3">
-                <Info className="w-3.5 h-3.5" />
-                <span>Tudo sobre a Plataforma</span>
-              </div>
-              <h2 className="text-3xl md:text-4xl font-extrabold text-white">O que é o Build IA?</h2>
-              <p className="text-[#d8b4fe] text-sm mt-2 max-w-xl mx-auto">
-                Sua suíte completa alimentada por inteligência artificial para transformar conceitos e prompts em softwares e aplicativos funcionais.
-              </p>
-            </div>
-
-            <div className="mb-8 p-5 bg-[#1a0a33] border border-[#d946ef]/30 rounded-2xl">
-              <h3 className="text-base font-bold text-white mb-2 flex items-center gap-2">
-                <Rocket className="w-5 h-5 text-[#f0abfc]" />
-                Para que ele serve?
-              </h3>
-              <p className="text-xs md:text-sm text-[#d8b4fe] leading-relaxed">
-                O Build IA foi projetado para acelerar o desenvolvimento de software. Com ele, você pode criar telas, sites completos, componentes de interface, scripts de automação e resolver problemas complexos de código usando linguagem natural.
-              </p>
-            </div>
-
-            <div className="flex flex-col sm:flex-row items-center gap-3 pt-2 border-t border-white/10">
-              <button 
-                onClick={() => setShowAboutModal(false)}
-                className="w-full sm:w-1/2 py-3 bg-gradient-to-r from-[#d946ef] to-[#8b5cf6] hover:opacity-90 text-white text-xs font-bold rounded-xl transition-all shadow-[0_0_20px_rgba(217,70,239,0.4)] flex items-center justify-center gap-2"
-              >
-                <span>Experimentar Agora</span>
-                <ArrowRight className="w-4 h-4" />
-              </button>
-
-              <button 
-                onClick={() => {
-                  setShowAboutModal(false);
-                  setShowPricingModal(true);
-                }}
-                className="w-full sm:w-1/2 py-3 bg-white/10 hover:bg-white/20 text-white text-xs font-semibold rounded-xl transition-colors border border-white/10"
-              >
-                Ver Planos Disponíveis
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Header Superior */}
-      <header className="w-full max-w-7xl mx-auto flex items-center justify-between px-6 py-4 z-20 sticky top-0 bg-[#07020d]/80 backdrop-blur-md border-b border-white/5">
-        <div 
-          className="flex items-center gap-2.5 cursor-pointer" 
-          onClick={() => setMessages([])}
-        >
-          <div className="p-2 bg-gradient-to-tr from-[#d946ef] to-[#8b5cf6] rounded-xl shadow-[0_0_15px_rgba(217,70,239,0.5)]">
-            <Cpu className="w-5 h-5 text-white" />
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="text-xl font-extrabold tracking-tight text-white">Build IA</span>
-            {isPro && (
-              <span className="bg-gradient-to-r from-amber-400 to-amber-600 text-black font-extrabold text-[10px] px-2 py-0.5 rounded-md flex items-center gap-1 shadow-sm">
-                <Crown className="w-3 h-3 fill-black" /> PRO
-              </span>
-            )}
+            <span>Build IA</span>
           </div>
         </div>
 
-        {/* Botões Centrais */}
-        <div className="hidden md:flex items-center gap-2">
-          <button 
-            onClick={() => setShowAboutModal(true)}
-            className="flex items-center gap-1.5 text-xs text-[#d8b4fe] hover:text-white bg-white/5 hover:bg-white/10 px-3.5 py-2 rounded-xl transition-colors border border-white/10"
-          >
-            <BookOpen className="w-3.5 h-3.5 text-[#f0abfc]" />
-            <span>Recursos</span>
-          </button>
+        <button onClick={() => setMessages([{ sender: 'ai', text: 'Novo chat iniciado! Como posso ajudar?' }])} style={{ margin: '15px 20px', background: '#7F56D9', color: 'white', border: 'none', padding: '12px', borderRadius: '10px', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+          <FiPlus /> Novo Chat
+        </button>
 
-          <button 
-            onClick={() => setInput("Crie uma Dashboard financeira interativa com gráficos")}
-            className="flex items-center gap-1.5 text-xs text-[#d8b4fe] hover:text-white bg-white/5 hover:bg-white/10 px-3.5 py-2 rounded-xl transition-colors border border-white/10"
-          >
-            <Lightbulb className="w-3.5 h-3.5 text-[#f0abfc]" />
-            <span>Exemplos</span>
+        <div style={{ flex: 1, overflowY: 'auto', padding: '0 10px' }}>
+          <div style={{ fontSize: '0.75rem', color: '#98A2B3', textTransform: 'uppercase', padding: '10px', fontWeight: 600 }}>Histórico</div>
+          {chatHistory.map((item, index) => (
+            <div key={index} onClick={() => setInputMessage(item)} style={{ padding: '10px 12px', borderRadius: '8px', cursor: 'pointer', fontSize: '0.9rem', color: '#98A2B3', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              {item}
+            </div>
+          ))}
+        </div>
+
+        <div style={{ padding: '15px 20px', borderTop: '1px solid #2A283E', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '0.9rem' }}>
+            <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: '#3F3D56', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 600 }}>
+              {currentUser ? currentUser.name.charAt(0).toUpperCase() : 'U'}
+            </div>
+            <span>{currentUser ? `${currentUser.name} ${currentUser.isPremium ? '👑' : ''}` : 'Visitante'}</span>
+          </div>
+          <button onClick={() => setIsAuthOpen(true)} style={{ background: 'transparent', border: 'none', color: '#98A2B3', cursor: 'pointer', fontSize: '1.1rem' }}>
+            <FiLogIn />
           </button>
         </div>
+      </aside>
 
-        {/* Botões Lado Direito */}
-        <div className="flex items-center gap-3">
-          {/* O BOTÃO SAIR SÓ APARECE SE ESTIVER NO CHAT (mensagens > 0) */}
-          {messages.length > 0 && (
-            <button 
-              onClick={() => setMessages([])}
-              className="flex items-center gap-1.5 bg-red-500/10 hover:bg-red-500/20 text-red-300 border border-red-500/30 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer"
-              title="Sair do Chat"
-            >
-              <LogOut className="w-3.5 h-3.5" />
-              <span>Sair</span>
-            </button>
-          )}
-
-          {isPro ? (
-            <button 
-              onClick={() => setShowProFeaturesModal(true)}
-              className="flex items-center gap-2 bg-gradient-to-r from-amber-500/20 to-amber-600/20 border border-amber-500/50 hover:border-amber-400 text-amber-300 px-4 py-2 rounded-xl text-xs font-semibold transition-all shadow-[0_0_15px_rgba(245,158,11,0.2)]"
-            >
-              <Crown className="w-3.5 h-3.5 text-amber-400" />
-              <span>Recursos Pro</span>
+      {/* ÁREA PRINCIPAL */}
+      <main style={{ flex: 1, display: 'flex', flexDirection: 'column', position: 'relative' }}>
+        
+        <header style={{ padding: '15px 25px', display: 'flex', justifyContent: 'flex-end', gap: '12px', borderBottom: '1px solid #2A283E', background: 'rgba(15, 14, 23, 0.8)' }}>
+          <button onClick={handlePremiumClick} style={{ background: 'linear-gradient(135deg, #F79009, #DC6803)', border: 'none', color: 'white', padding: '8px 16px', borderRadius: '8px', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <FiCrown /> Plano Premium
+          </button>
+          {!currentUser ? (
+            <button onClick={() => setIsAuthOpen(true)} style={{ background: '#161525', border: '1px solid #2A283E', color: 'white', padding: '8px 16px', borderRadius: '8px', cursor: 'pointer' }}>
+              Entrar / Cadastrar
             </button>
           ) : (
-            <button 
-              onClick={() => setShowPricingModal(true)}
-              className="flex items-center gap-2 bg-gradient-to-r from-[#d946ef]/20 to-[#8b5cf6]/20 border border-[#d946ef]/50 hover:border-[#f0abfc] text-[#f0abfc] hover:text-white px-4 py-2 rounded-xl text-xs font-semibold transition-all shadow-[0_0_15px_rgba(217,70,239,0.2)]"
-            >
-              <CreditCard className="w-3.5 h-3.5" />
-              <span>Planos</span>
+            <button onClick={logoutUser} style={{ background: '#F04438', border: 'none', color: 'white', padding: '8px 16px', borderRadius: '8px', cursor: 'pointer' }}>
+              <FiLogOut /> Sair
             </button>
           )}
+        </header>
 
-          <button 
-            onClick={() => setMessages([])}
-            className="flex items-center gap-1.5 text-xs text-[#d8b4fe] hover:text-white bg-white/5 hover:bg-white/10 px-3 py-2 rounded-xl transition-colors border border-white/10"
-            title="Limpar conversa"
-          >
-            <RotateCcw className="w-3.5 h-3.5" />
-            <span>Limpar</span>
-          </button>
+        <div style={{ flex: 1, overflowY: 'auto', padding: '30px', display: 'flex', flexDirection: 'column', gap: '20px', maxWidth: '900px', width: '100%', margin: '0 auto' }}>
+          {messages.map((msg, idx) => (
+            <div key={idx} style={{ display: 'flex', gap: '15px', maxWidth: '80%', alignSelf: msg.sender === 'user' ? 'flex-end' : 'flex-start', flexDirection: msg.sender === 'user' ? 'row-reverse' : 'row' }}>
+              <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: msg.sender === 'ai' ? '#7F56D9' : '#3F3D56', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', flexShrink: 0 }}>
+                {msg.sender === 'ai' ? <FiZap /> : <FiUser />}
+              </div>
+              <div style={{ padding: '14px 18px', borderRadius: '14px', backgroundColor: msg.sender === 'ai' ? '#161525' : '#7F56D9', border: msg.sender === 'ai' ? '1px solid #2A283E' : 'none', color: 'white' }}>
+                {msg.text && <p>{msg.text}</p>}
+                {msg.image && <img src={msg.image} alt="Captura" style={{ maxWidth: '200px', borderRadius: '8px' }} />}
+              </div>
+            </div>
+          ))}
+          <div ref={messagesEndRef} />
         </div>
-      </header>
 
-      {/* Conteúdo Central */}
-      <main className="flex-1 flex flex-col h-full relative z-10 overflow-hidden">
-        <div className="flex-1 overflow-y-auto px-4 flex flex-col items-center justify-center">
-          <div className="max-w-3xl w-full">
-            {messages.length === 0 ? (
-              <div className="text-center my-auto pb-8 flex flex-col items-center">
-                <h1 className="text-4xl md:text-6xl font-black tracking-tight text-white mb-3">
-                  Crie algo com a <br />
-                  <span className="bg-gradient-to-r from-[#f0abfc] via-[#d946ef] to-[#8b5cf6] bg-clip-text text-transparent drop-shadow-[0_0_25px_rgba(217,70,239,0.5)]">
-                    Build IA
-                  </span>
-                </h1>
-
-                <p className="text-[#d8b4fe] text-base max-w-md mt-2 mb-6">
-                  Crie apps e sites conversando com a IA
-                </p>
-
-                <div className="w-full max-w-xl mx-auto">
-                  <form
-                    onSubmit={(e) => {
-                      e.preventDefault();
-                      handleSubmit();
-                    }}
-                    className="bg-[#15092a]/90 backdrop-blur-xl border border-[#d946ef]/50 focus-within:border-[#f0abfc] rounded-2xl flex items-center px-4 py-3 shadow-[0_0_35px_rgba(217,70,239,0.25)] transition-all"
-                  >
-                    <button 
-                      type="button" 
-                      onClick={() => setMessages([])}
-                      className="text-[#d8b4fe] hover:text-white p-1.5 transition-colors"
-                    >
-                      <Plus className="w-5 h-5" />
-                    </button>
-
-                    <input
-                      type="text"
-                      value={input}
-                      onChange={(e) => setInput(e.target.value)}
-                      placeholder="Peça à Build IA para criar um aplicativo web que..."
-                      className="bg-transparent flex-1 focus:outline-none text-[#e3e3e3] placeholder-[#a78bfa]/70 text-sm px-3"
-                    />
-
-                    <div className="flex items-center gap-2">
-                      <button 
-                        type="submit" 
-                        disabled={loading || !input.trim()}
-                        className="bg-gradient-to-r from-[#d946ef] to-[#8b5cf6] hover:opacity-90 disabled:opacity-50 text-white text-xs font-semibold px-4 py-2 rounded-xl flex items-center gap-1.5 transition-all shadow-[0_0_15px_rgba(217,70,239,0.4)] cursor-pointer disabled:cursor-not-allowed"
-                      >
-                        {loading ? (
-                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                        ) : (
-                          <Sparkles className="w-3.5 h-3.5" />
-                        )}
-                        <span>Construir</span>
-                      </button>
-                    </div>
-                  </form>
-                </div>
-              </div>
-            ) : (
-              <div className="space-y-6 py-8 w-full">
-                {messages.map((msg, i) => (
-                  <div key={i} className="flex gap-4 items-start">
-                    {msg.role === 'user' ? (
-                      <div className="w-8 h-8 rounded-full bg-[#2a1249] flex items-center justify-center shrink-0 border border-[#d946ef]/40">
-                        <User className="w-5 h-5 text-[#f0abfc]" />
-                      </div>
-                    ) : (
-                      <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-[#d946ef] to-[#8b5cf6] flex items-center justify-center shrink-0">
-                        <Sparkles className="w-4 h-4 text-white" />
-                      </div>
-                    )}
-                    <div className="flex-1 pt-1 text-[#e3e3e3] leading-relaxed whitespace-pre-wrap">
-                      {msg.content}
-                    </div>
-                  </div>
-                ))}
-                {loading && (
-                  <div className="flex gap-4 items-center">
-                    <Sparkles className="w-5 h-5 text-[#f0abfc] animate-spin" />
-                    <span className="text-sm text-[#d8b4fe]">Construindo sua aplicação...</span>
-                  </div>
-                )}
-              </div>
-            )}
+        <div style={{ padding: '20px 30px', display: 'flex', justifyContent: 'center' }}>
+          <div style={{ maxWidth: '900px', width: '100%', background: '#161525', border: '1px solid #2A283E', borderRadius: '14px', padding: '10px 15px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <button onClick={startCamera} style={{ background: 'transparent', border: 'none', color: '#98A2B3', cursor: 'pointer', fontSize: '1.2rem' }}>
+              <FiCamera />
+            </button>
+            <input 
+              type="text" 
+              value={inputMessage}
+              onChange={(e) => setInputMessage(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
+              placeholder="Envie uma mensagem para a Build IA..." 
+              style={{ flex: 1, background: 'transparent', border: 'none', color: 'white', outline: 'none', fontSize: '0.95rem' }} 
+            />
+            <button onClick={sendMessage} style={{ background: '#7F56D9', border: 'none', color: 'white', width: '36px', height: '36px', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <FiSend />
+            </button>
           </div>
         </div>
       </main>
+
+      {/* MODAL AUTH */}
+      {isAuthOpen && (
+        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+          <div style={{ background: '#161525', border: '1px solid #2A283E', padding: '30px', borderRadius: '20px', width: '100%', maxWidth: '400px', position: 'relative' }}>
+            <button onClick={() => setIsAuthOpen(false)} style={{ position: 'absolute', top: '20px', right: '20px', background: 'transparent', border: 'none', color: '#98A2B3', cursor: 'pointer', fontSize: '1.2rem' }}><FiX /></button>
+            <h2 style={{ textAlign: 'center', marginBottom: '20px' }}>{authMode === 'login' ? 'Entrar na Conta' : 'Cadastre-se'}</h2>
+            
+            <div style={{ display: 'flex', background: '#0F0E17', borderRadius: '10px', padding: '4px', marginBottom: '20px' }}>
+              <button onClick={() => setAuthMode('login')} style={{ flex: 1, background: authMode === 'login' ? '#161525' : 'transparent', color: 'white', border: 'none', padding: '10px', borderRadius: '8px', cursor: 'pointer' }}>Entrar</button>
+              <button onClick={() => setAuthMode('register')} style={{ flex: 1, background: authMode === 'register' ? '#161525' : 'transparent', color: 'white', border: 'none', padding: '10px', borderRadius: '8px', cursor: 'pointer' }}>Cadastrar</button>
+            </div>
+
+            <button onClick={loginWithGoogle} style={{ width: '100%', background: 'white', color: '#111', border: 'none', padding: '12px', borderRadius: '10px', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', marginBottom: '20px' }}>
+              <FcGoogle size={20} /> Continuar com Google
+            </button>
+
+            <form onSubmit={handleAuthSubmit}>
+              {authMode === 'register' && (
+                <div style={{ marginBottom: '15px' }}>
+                  <label style={{ display: 'block', fontSize: '0.85rem', marginBottom: '5px' }}>Nome</label>
+                  <input type="text" value={authName} onChange={(e) => setAuthName(e.target.value)} style={{ width: '100%', background: '#0F0E17', border: '1px solid #2A283E', padding: '10px', borderRadius: '8px', color: 'white' }} />
+                </div>
+              )}
+              <div style={{ marginBottom: '15px' }}>
+                <label style={{ display: 'block', fontSize: '0.85rem', marginBottom: '5px' }}>E-mail</label>
+                <input type="email" required value={authEmail} onChange={(e) => setAuthEmail(e.target.value)} style={{ width: '100%', background: '#0F0E17', border: '1px solid #2A283E', padding: '10px', borderRadius: '8px', color: 'white' }} />
+              </div>
+              <div style={{ marginBottom: '20px' }}>
+                <label style={{ display: 'block', fontSize: '0.85rem', marginBottom: '5px' }}>Senha</label>
+                <input type="password" required value={authPassword} onChange={(e) => setAuthPassword(e.target.value)} style={{ width: '100%', background: '#0F0E17', border: '1px solid #2A283E', padding: '10px', borderRadius: '8px', color: 'white' }} />
+              </div>
+              <button type="submit" style={{ width: '100%', background: '#7F56D9', color: 'white', border: 'none', padding: '12px', borderRadius: '10px', fontWeight: 600, cursor: 'pointer' }}>
+                {authMode === 'login' ? 'Entrar' : 'Criar Conta'}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL PREMIUM */}
+      {isPremiumOpen && (
+        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+          <div style={{ background: '#161525', border: '1px solid #2A283E', padding: '30px', borderRadius: '20px', width: '100%', maxWidth: '480px', position: 'relative' }}>
+            <button onClick={() => setIsPremiumOpen(false)} style={{ position: 'absolute', top: '20px', right: '20px', background: 'transparent', border: 'none', color: '#98A2B3', cursor: 'pointer', fontSize: '1.2rem' }}><FiX /></button>
+            <h2 style={{ textAlign: 'center', marginBottom: '10px' }}><FiCrown color="#F79009" /> Seja Premium</h2>
+            <p style={{ textAlign: 'center', color: '#98A2B3', marginBottom: '20px', fontSize: '0.9rem' }}>Desbloqueie recursos avançados por apenas R$ 5,99/mês</p>
+            
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '20px', fontSize: '0.9rem' }}>
+              <div><FiCheckCircle color="#12B76A" /> Acesso ilimitado à inteligência artificial</div>
+              <div><FiCheckCircle color="#12B76A" /> Respostas prioritárias ultrarrápidas</div>
+              <div><FiCheckCircle color="#12B76A" /> Análise avançada de fotos e câmera</div>
+              <div><FiCheckCircle color="#12B76A" /> Histórico completo salvo na nuvem</div>
+              <div><FiCheckCircle color="#12B76A" /> Suporte VIP dedicado 24/7</div>
+            </div>
+
+            <button onClick={() => { setIsPremiumOpen(false); setIsPixOpen(true); }} style={{ width: '100%', background: 'linear-gradient(135deg, #F79009, #DC6803)', color: 'white', border: 'none', padding: '12px', borderRadius: '10px', fontWeight: 600, cursor: 'pointer' }}>
+              Assinar por R$ 5,99 via PIX
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL PIX */}
+      {isPixOpen && (
+        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+          <div style={{ background: '#161525', border: '1px solid #2A283E', padding: '30px', borderRadius: '20px', width: '100%', maxWidth: '400px', textAlign: 'center', position: 'relative' }}>
+            <button onClick={() => setIsPixOpen(false)} style={{ position: 'absolute', top: '20px', right: '20px', background: 'transparent', border: 'none', color: '#98A2B3', cursor: 'pointer', fontSize: '1.2rem' }}><FiX /></button>
+            <h2 style={{ marginBottom: '10px' }}>Pagamento PIX</h2>
+            <p style={{ color: '#98A2B3', fontSize: '0.9rem', marginBottom: '20px' }}>Escaneie ou copie a chave para pagar R$ 5,99</p>
+
+            <div style={{ background: 'white', padding: '10px', borderRadius: '10px', display: 'inline-block', marginBottom: '15px' }}>
+              <img src="https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=00020126580014br.gov.bcb.pix0136140132e5-561a-41eb-bf1f-b84592f0fc870204059953039865802BR5925Build%20IA%20Assinatura6009Sao%20Paulo62070503***6304" alt="QR Code Pix" />
+            </div>
+
+            <div style={{ background: '#0F0E17', padding: '10px', borderRadius: '8px', fontSize: '0.8rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px', wordBreak: 'break-all' }}>
+              <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>140132e5-561a-41eb-bf1f-b84592f0fc87</span>
+              <button onClick={copyPixKey} style={{ background: '#7F56D9', color: 'white', border: 'none', padding: '5px 10px', borderRadius: '5px', cursor: 'pointer' }}><FiCopy /></button>
+            </div>
+
+            <button onClick={simulatePaymentApproval} style={{ width: '100%', background: '#12B76A', color: 'white', border: 'none', padding: '12px', borderRadius: '10px', fontWeight: 600, cursor: 'pointer' }}>
+              Simular Pagamento Realizado
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL CÂMERA */}
+      {isCameraOpen && (
+        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+          <div style={{ background: '#161525', border: '1px solid #2A283E', padding: '20px', borderRadius: '20px', width: '100%', maxWidth: '500px', textAlign: 'center' }}>
+            <h2 style={{ marginBottom: '15px' }}>Tirar Foto</h2>
+            <div style={{ width: '100%', height: '300px', background: 'black', borderRadius: '10px', overflow: 'hidden', marginBottom: '15px' }}>
+              <video ref={videoRef} autoPlay playsInline style={{ width: '100%', height: '100%', objectFit: 'cover' }}></video>
+            </div>
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <button onClick={stopCamera} style={{ flex: 1, background: '#0F0E17', border: '1px solid #2A283E', color: 'white', padding: '10px', borderRadius: '8px', cursor: 'pointer' }}>Cancelar</button>
+              <button onClick={capturePhoto} style={{ flex: 1, background: '#7F56D9', color: 'white', border: 'none', padding: '10px', borderRadius: '8px', cursor: 'pointer' }}>Capturar</button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
