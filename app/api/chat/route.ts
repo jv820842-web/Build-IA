@@ -1,4 +1,7 @@
 import { NextResponse } from 'next/server';
+import { GoogleGenerativeAI } from '@google/generative-ai';
+
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
 
 export async function POST(req: Request) {
   try {
@@ -6,7 +9,12 @@ export async function POST(req: Request) {
     const { messages } = body;
     const lastUserMessage = messages?.[messages.length - 1]?.content || 'Olá';
 
-    return NextResponse.json({ content: `Resposta simulada para: ${lastUserMessage}` });
+    // Substituindo pelo modelo correto e funcional
+    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+    const result = await model.generateContent(lastUserMessage);
+    const responseText = result.response.text();
+
+    return NextResponse.json({ content: responseText });
   } catch (error) {
     console.error('Erro no chat:', error);
     return NextResponse.json(
