@@ -1,44 +1,42 @@
-import { GoogleGenAI } from '@google/genai';
 import { NextResponse } from 'next/server';
+import { GoogleGenerativeAI } from '@google/generative-ai';
+
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
 
 export async function POST(req: Request) {
   try {
-    const apiKey = process.env.GEMINI_API_KEY;
-    
-    if (!apiKey) {
-      return NextResponse.json(
-        { role: 'assistant', content: 'Chave API Gemini não configurada no servidor.' },
-        { status: 500 }
-      );
-    }
-
-    const ai = new GoogleGenAI({ apiKey });
     const { messages } = await req.json();
-    const lastMessage = messages[messages.length - 1]?.content || '';
 
-    // Tenta primeiro com gemini-3.6-flash
-    let response;
-    try {
-      response = await ai.models.generateContent({
-        model: 'gemini-3.6-flash',
-        contents: lastMessage,
-      });
-    } catch (e) {
-      // Se falhar por estar instável, tenta com o gemini-3.6-pro
-      response = await ai.models.generateContent({
-        model: 'gemini-3.6-pro',
-        contents: lastMessage,
-      });
-    }
+    const systemInstruction = `
+Você é a Build IA, uma assistente desenvolvida para criar aplicativos, sites e solucionar dúvidas de programação.
+Regras de identidade:
+1. NUNCA diga que você é o Gemini ou criada pelo Google.
+2. Responda sempre que é a Build IA.
+3. Seja direta, objetiva e rápida nas respostas.
+    `;
 
-    return NextResponse.json({
-      role: 'assistant',
-      content: response.text,
+    // Utiliza o modelo mais rápido e otimizado (gemini-1.5-flash)
+    const model = genAI.getGenerativeModel({
+      model: 'gemini-1.5-flash',
+      systemInstruction: systemInstruction,
+      generationConfig: {
+        maxOutputTokens: 1500, // Limita o tamanho para acelerar o envio
+        temperature: 0.7,
+      },
     });
-  } catch (error: any) {
-    console.error('Erro no servidor:', error);
+
+    // Pega a última mensagem enviada pelo usuário
+    const lastUserMessage = messages[messages.length - 1]?.content || '';
+
+    // Gera a resposta
+    const result = await model.generateContent(lastUserMessage);
+    const responseText = result.response.text();
+
+    return NextResponse.json({ content: responseText });
+  } catch (error) {
+    console.error('Erro no chat:', error);
     return NextResponse.json(
-      { role: 'assistant', content: `Servidores do Google ocupados. Tente enviar a mensagem novamente em instantes.` },
+      { error: 'Falha ao processar requisição' },
       { status: 500 }
     );
   }
