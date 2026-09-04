@@ -16,10 +16,14 @@ import {
   Terminal,
   X,
   CreditCard,
-  LogIn,
   RotateCcw,
   BookOpen,
-  Lightbulb
+  Lightbulb,
+  Info,
+  Globe,
+  Rocket,
+  ShieldCheck,
+  Loader2
 } from 'lucide-react';
 
 interface Message {
@@ -32,9 +36,10 @@ export default function Home() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
+  const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [showPricingModal, setShowPricingModal] = useState(false);
-  const [showFeaturesModal, setShowFeaturesModal] = useState(false);
-  const [selectedPlan, setSelectedPlan] = useState<'free' | 'pro'>('free');
+  const [showAboutModal, setShowAboutModal] = useState(false);
+  const [selectedPlan, setSelectedPlan] = useState<'free' | 'pro'>('pro');
 
   const handleSubmit = async (textToSend?: string) => {
     const query = textToSend || input;
@@ -64,13 +69,25 @@ export default function Home() {
     }
   };
 
-  const handleLogin = () => {
-    setShowLanding(false);
-  };
+  const handleCheckout = async () => {
+    setCheckoutLoading(true);
+    try {
+      const res = await fetch('/api/checkout', {
+        method: 'POST',
+      });
+      const data = await res.json();
 
-  const loadExamplePrompt = (promptText: string) => {
-    setShowLanding(false);
-    setInput(promptText);
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        alert('Erro ao redirecionar para o pagamento.');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Ocorreu um erro ao processar o pagamento.');
+    } finally {
+      setCheckoutLoading(false);
+    }
   };
 
   return (
@@ -79,42 +96,119 @@ export default function Home() {
       <div className="absolute top-[-10%] left-1/2 -translate-x-1/2 w-[1000px] h-[650px] bg-gradient-to-tr from-[#d946ef] via-[#8b5cf6] to-[#3b82f6] opacity-35 blur-[160px] pointer-events-none rounded-full" />
       <div className="absolute bottom-[5%] left-1/2 -translate-x-1/2 w-[900px] h-[500px] bg-gradient-to-r from-[#ec4899] via-[#a855f7] to-[#6366f1] opacity-30 blur-[170px] pointer-events-none rounded-full" />
 
-      {/* Modal de Recursos */}
-      {showFeaturesModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-md animate-in fade-in duration-200">
-          <div className="bg-[#120724] border border-[#d946ef]/40 rounded-3xl p-6 md:p-8 max-w-2xl w-full relative shadow-[0_0_50px_rgba(217,70,239,0.3)]">
+      {/* Modal COMPLETO: "Ver mais" / Sobre o Build IA */}
+      {showAboutModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
+          <div className="bg-[#120724] border border-[#d946ef]/40 rounded-3xl p-6 md:p-8 max-w-3xl w-full max-h-[85vh] overflow-y-auto relative shadow-[0_0_60px_rgba(217,70,239,0.35)]">
             <button 
-              onClick={() => setShowFeaturesModal(false)}
+              onClick={() => setShowAboutModal(false)}
               className="absolute top-5 right-5 p-2 text-[#d8b4fe] hover:text-white bg-white/5 hover:bg-white/10 rounded-full transition-colors"
             >
               <X className="w-5 h-5" />
             </button>
 
+            {/* Cabeçalho do Modal */}
             <div className="text-center mb-8">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#d946ef]/20 border border-[#d946ef]/40 text-[#f0abfc] text-xs font-semibold uppercase mb-3">
-                <BookOpen className="w-3.5 h-3.5" />
-                <span>Ferramentas da Plataforma</span>
+              <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-[#d946ef]/20 border border-[#d946ef]/40 text-[#f0abfc] text-xs font-semibold uppercase mb-3">
+                <Info className="w-3.5 h-3.5" />
+                <span>Tudo sobre a Plataforma</span>
               </div>
-              <h2 className="text-3xl font-extrabold text-white">Recursos do Build IA</h2>
-              <p className="text-[#d8b4fe] text-sm mt-1">Tudo que o motor IA oferece para agilizar o desenvolvimento.</p>
+              <h2 className="text-3xl md:text-4xl font-extrabold text-white">O que é o Build IA?</h2>
+              <p className="text-[#d8b4fe] text-sm mt-2 max-w-xl mx-auto">
+                Sua suíte completa alimentada por inteligência artificial para transformar conceitos e prompts em softwares e aplicativos funcionais.
+              </p>
             </div>
 
-            <div className="grid md:grid-cols-3 gap-4">
-              <div className="p-5 bg-[#1f0938] border border-[#d946ef]/30 rounded-2xl">
-                <Code2 className="w-6 h-6 text-[#f0abfc] mb-3" />
-                <h3 className="text-sm font-bold text-white mb-1">Geração de Código Clean</h3>
-                <p className="text-xs text-[#d8b4fe]">Geração automática em Next.js, React e Tailwind CSS.</p>
+            {/* Seção 1: Para que serve? */}
+            <div className="mb-8 p-5 bg-[#1a0a33] border border-[#d946ef]/30 rounded-2xl">
+              <h3 className="text-base font-bold text-white mb-2 flex items-center gap-2">
+                <Rocket className="w-5 h-5 text-[#f0abfc]" />
+                Para que ele serve?
+              </h3>
+              <p className="text-xs md:text-sm text-[#d8b4fe] leading-relaxed">
+                O Build IA foi projetado para acelerar o desenvolvimento de software. Com ele, você pode criar telas, sites completos, componentes de interface, scripts de automação e resolver problemas complexos de código usando linguagem natural.
+              </p>
+            </div>
+
+            {/* Seção 2: O que você pode criar? */}
+            <div className="mb-8">
+              <h3 className="text-base font-bold text-white mb-4 flex items-center gap-2">
+                <Globe className="w-5 h-5 text-[#f0abfc]" />
+                O que você pode construir?
+              </h3>
+              <div className="grid md:grid-cols-2 gap-3">
+                <div className="p-4 bg-[#1f0938] border border-white/5 rounded-xl">
+                  <h4 className="text-xs font-bold text-white mb-1">💻 Landing Pages e Portfólios</h4>
+                  <p className="text-[11px] text-[#d8b4fe]">Páginas modernas, responsivas e prontas para publicação.</p>
+                </div>
+                <div className="p-4 bg-[#1f0938] border border-white/5 rounded-xl">
+                  <h4 className="text-xs font-bold text-white mb-1">📊 Dashboards & Apps Web</h4>
+                  <p className="text-[11px] text-[#d8b4fe]">Painéis administrativos com gráficos e tabelas dinâmicas.</p>
+                </div>
+                <div className="p-4 bg-[#1f0938] border border-white/5 rounded-xl">
+                  <h4 className="text-xs font-bold text-white mb-1">🐍 Scripts e APIs em Python/Node</h4>
+                  <p className="text-[11px] text-[#d8b4fe]">Backend limpo, rotas de API e algoritmos de automação.</p>
+                </div>
+                <div className="p-4 bg-[#1f0938] border border-white/5 rounded-xl">
+                  <h4 className="text-xs font-bold text-white mb-1">⚡ Componentes React / Tailwind</h4>
+                  <p className="text-[11px] text-[#d8b4fe]">Elementos modulares prontos para copiar e colar no seu projeto.</p>
+                </div>
               </div>
-              <div className="p-5 bg-[#1f0938] border border-[#d946ef]/30 rounded-2xl">
-                <Zap className="w-6 h-6 text-[#f0abfc] mb-3" />
-                <h3 className="text-sm font-bold text-white mb-1">Execução Instantânea</h3>
-                <p className="text-xs text-[#d8b4fe]">Latência mínima com o modelo Build IA 3.6 Flash.</p>
+            </div>
+
+            {/* Seção 3: Principais Recursos */}
+            <div className="mb-8">
+              <h3 className="text-base font-bold text-white mb-4 flex items-center gap-2">
+                <Zap className="w-5 h-5 text-[#f0abfc]" />
+                Principais Recursos da Plataforma
+              </h3>
+              <div className="space-y-3">
+                <div className="flex items-start gap-3 p-3 bg-white/5 rounded-xl border border-white/5">
+                  <Code2 className="w-5 h-5 text-[#f0abfc] shrink-0 mt-0.5" />
+                  <div>
+                    <h4 className="text-xs font-bold text-white">Geração de Código Clean</h4>
+                    <p className="text-[11px] text-[#d8b4fe]">Código padronizado utilizando boas práticas, TypeScript e Next.js.</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3 p-3 bg-white/5 rounded-xl border border-white/5">
+                  <Layers className="w-5 h-5 text-[#f0abfc] shrink-0 mt-0.5" />
+                  <div>
+                    <h4 className="text-xs font-bold text-white">Modelo Ultrarrápido Build IA 3.6</h4>
+                    <p className="text-[11px] text-[#d8b4fe]">Respostas geradas em tempo real com baixa latência para não pausar seu workflow.</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3 p-3 bg-white/5 rounded-xl border border-white/5">
+                  <ShieldCheck className="w-5 h-5 text-[#f0abfc] shrink-0 mt-0.5" />
+                  <div>
+                    <h4 className="text-xs font-bold text-white">Segurança e Exportação Prática</h4>
+                    <p className="text-[11px] text-[#d8b4fe]">Exporte ou copie todo o código gerado em 1 clique para usar em qualquer editor.</p>
+                  </div>
+                </div>
               </div>
-              <div className="p-5 bg-[#1f0938] border border-[#d946ef]/30 rounded-2xl">
-                <Layers className="w-6 h-6 text-[#f0abfc] mb-3" />
-                <h3 className="text-sm font-bold text-white mb-1">Componentes UI</h3>
-                <p className="text-xs text-[#d8b4fe]">Layouts modernos, responsivos e prontos para publicar.</p>
-              </div>
+            </div>
+
+            {/* Botões do Modal */}
+            <div className="flex flex-col sm:flex-row items-center gap-3 pt-2 border-t border-white/10">
+              <button 
+                onClick={() => {
+                  setShowAboutModal(false);
+                  setShowLanding(false);
+                }}
+                className="w-full sm:w-1/2 py-3 bg-gradient-to-r from-[#d946ef] to-[#8b5cf6] hover:opacity-90 text-white text-xs font-bold rounded-xl transition-all shadow-[0_0_20px_rgba(217,70,239,0.4)] flex items-center justify-center gap-2"
+              >
+                <span>Experimentar Agora</span>
+                <ArrowRight className="w-4 h-4" />
+              </button>
+
+              <button 
+                onClick={() => {
+                  setShowAboutModal(false);
+                  setShowPricingModal(true);
+                }}
+                className="w-full sm:w-1/2 py-3 bg-white/10 hover:bg-white/20 text-white text-xs font-semibold rounded-xl transition-colors border border-white/10"
+              >
+                Ver Planos Disponíveis
+              </button>
             </div>
           </div>
         </div>
@@ -196,14 +290,21 @@ export default function Home() {
                   </ul>
                 </div>
                 <button 
-                  onClick={() => {
-                    setSelectedPlan('pro');
-                    setShowPricingModal(false);
-                    setShowLanding(false);
-                  }}
-                  className="w-full py-2.5 bg-gradient-to-r from-[#d946ef] to-[#8b5cf6] hover:opacity-90 text-white text-xs font-semibold rounded-xl transition-all shadow-[0_0_15px_rgba(217,70,239,0.4)]"
+                  onClick={handleCheckout}
+                  disabled={checkoutLoading}
+                  className="w-full py-2.5 bg-gradient-to-r from-[#d946ef] to-[#8b5cf6] hover:opacity-90 text-white text-xs font-bold rounded-xl transition-all shadow-[0_0_15px_rgba(217,70,239,0.4)] flex items-center justify-center gap-2"
                 >
-                  Acessar Pro Studio ($ 5,99)
+                  {checkoutLoading ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span>Processando...</span>
+                    </>
+                  ) : (
+                    <>
+                      <CreditCard className="w-4 h-4" />
+                      <span>Pagar $ 5,99 no Checkout</span>
+                    </>
+                  )}
                 </button>
               </div>
             </div>
@@ -211,7 +312,7 @@ export default function Home() {
         </div>
       )}
 
-      {/* Header Superior Limpo com Botões Úteis */}
+      {/* Header Superior */}
       <header className="w-full max-w-7xl mx-auto flex items-center justify-between px-6 py-4 z-20 sticky top-0 bg-[#07020d]/80 backdrop-blur-md border-b border-white/5">
         <div 
           className="flex items-center gap-2.5 cursor-pointer" 
@@ -223,10 +324,10 @@ export default function Home() {
           <span className="text-xl font-extrabold tracking-tight text-white">Build IA</span>
         </div>
 
-        {/* Botões do Meio (Recursos e Exemplos) */}
+        {/* Botões Centrais */}
         <div className="hidden md:flex items-center gap-2">
           <button 
-            onClick={() => setShowFeaturesModal(true)}
+            onClick={() => setShowAboutModal(true)}
             className="flex items-center gap-1.5 text-xs text-[#d8b4fe] hover:text-white bg-white/5 hover:bg-white/10 px-3.5 py-2 rounded-xl transition-colors border border-white/10"
           >
             <BookOpen className="w-3.5 h-3.5 text-[#f0abfc]" />
@@ -234,7 +335,10 @@ export default function Home() {
           </button>
 
           <button 
-            onClick={() => loadExamplePrompt("Crie uma Dashboard financeira interativa com gráficos")}
+            onClick={() => {
+              setShowLanding(false);
+              setInput("Crie uma Dashboard financeira interativa com gráficos");
+            }}
             className="flex items-center gap-1.5 text-xs text-[#d8b4fe] hover:text-white bg-white/5 hover:bg-white/10 px-3.5 py-2 rounded-xl transition-colors border border-white/10"
           >
             <Lightbulb className="w-3.5 h-3.5 text-[#f0abfc]" />
@@ -242,7 +346,7 @@ export default function Home() {
           </button>
         </div>
 
-        {/* Botões de Ação Direita */}
+        {/* Botões Lado Direito */}
         <div className="flex items-center gap-3">
           <button 
             onClick={() => setShowPricingModal(true)}
@@ -263,18 +367,18 @@ export default function Home() {
             </button>
           )}
 
-          {/* Botão Entrar */}
+          {/* NOVO BOTÃO: "Ver mais" */}
           <button 
-            onClick={handleLogin}
-            className="bg-white hover:bg-slate-100 text-slate-900 px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shadow-sm"
+            onClick={() => setShowAboutModal(true)}
+            className="bg-[#1f0938] hover:bg-[#2e0e54] text-[#f0abfc] hover:text-white border border-[#d946ef]/40 px-4 py-2 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 shadow-sm"
           >
-            <LogIn className="w-3.5 h-3.5" />
-            <span>Entrar</span>
+            <Info className="w-3.5 h-3.5" />
+            <span>Ver mais</span>
           </button>
         </div>
       </header>
 
-      {/* Conteúdo Principal */}
+      {/* Conteúdo Principal / Landing Page */}
       {showLanding ? (
         <div className="flex-1 flex flex-col justify-between">
           <main className="max-w-4xl mx-auto w-full text-center my-auto py-20 px-6 z-10 flex flex-col items-center">
@@ -304,39 +408,20 @@ export default function Home() {
               </button>
 
               <button 
-                onClick={() => setShowPricingModal(true)}
+                onClick={() => setShowAboutModal(true)}
                 className="bg-white/5 hover:bg-white/10 text-[#d8b4fe] border border-white/10 px-6 py-4 rounded-2xl text-base font-medium transition-all"
               >
-                Ver Planos
+                Ver mais sobre a IA
               </button>
             </div>
           </main>
-
-          <section className="max-w-5xl mx-auto w-full py-16 px-6 border-t border-white/10 z-10">
-            <div className="grid md:grid-cols-3 gap-6">
-              <div className="p-6 bg-[#120724]/80 backdrop-blur-md rounded-2xl border border-[#3b1768]">
-                <Code2 className="w-8 h-8 text-[#f0abfc] mb-4" />
-                <h3 className="text-lg font-semibold text-white mb-2">Geração de Código Clean</h3>
-                <p className="text-sm text-[#d8b4fe]">Código otimizado em Next.js, React e TypeScript com boas práticas integradas.</p>
-              </div>
-              <div className="p-6 bg-[#120724]/80 backdrop-blur-md rounded-2xl border border-[#3b1768]">
-                <Zap className="w-8 h-8 text-[#f0abfc] mb-4" />
-                <h3 className="text-lg font-semibold text-white mb-2">Respostas Ultrarrápidas</h3>
-                <p className="text-sm text-[#d8b4fe]">Motor Build IA 3.6 Flash projetado para baixíssima latência na criação.</p>
-              </div>
-              <div className="p-6 bg-[#120724]/80 backdrop-blur-md rounded-2xl border border-[#3b1768]">
-                <Layers className="w-8 h-8 text-[#f0abfc] mb-4" />
-                <h3 className="text-lg font-semibold text-white mb-2">Interfaces Reativas</h3>
-                <p className="text-sm text-[#d8b4fe]">Componentes UI elegantes, responsivos e prontos para publicar na nuvem.</p>
-              </div>
-            </div>
-          </section>
 
           <footer className="text-center text-xs text-[#a78bfa]/60 py-6 border-t border-white/5 z-10">
             © Build IA Studio. Todos os direitos reservados.
           </footer>
         </div>
       ) : (
+        /* Tela do Chat */
         <main className="flex-1 flex flex-col h-full relative z-10 overflow-hidden">
           <div className="flex-1 overflow-y-auto px-4 flex flex-col items-center justify-center">
             <div className="max-w-3xl w-full">
@@ -365,7 +450,6 @@ export default function Home() {
                         type="button" 
                         onClick={() => setMessages([])}
                         className="text-[#d8b4fe] hover:text-white p-1.5 transition-colors"
-                        title="Nova conversa"
                       >
                         <Plus className="w-5 h-5" />
                       </button>
@@ -393,24 +477,6 @@ export default function Home() {
                       </div>
                     </form>
                   </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 w-full max-w-xl mt-6">
-                    <button 
-                      onClick={() => handleSubmit("Crie uma Landing Page moderna com Tailwind CSS")}
-                      className="p-3.5 bg-[#120724]/70 hover:bg-[#1f0938] border border-white/10 hover:border-[#d946ef]/60 rounded-xl text-left transition-all text-xs text-[#f0abfc] flex items-center gap-2.5 shadow-sm"
-                    >
-                      <Code2 className="w-4 h-4 text-[#f0abfc]" />
-                      <span>Criar Landing Page em Next.js</span>
-                    </button>
-
-                    <button 
-                      onClick={() => handleSubmit("Escreva uma função em Python para processar dados")}
-                      className="p-3.5 bg-[#120724]/70 hover:bg-[#1f0938] border border-white/10 hover:border-[#d946ef]/60 rounded-xl text-left transition-all text-xs text-[#f0abfc] flex items-center gap-2.5 shadow-sm"
-                    >
-                      <Terminal className="w-4 h-4 text-[#f0abfc]" />
-                      <span>Gerar script em Python</span>
-                    </button>
-                  </div>
                 </div>
               ) : (
                 <div className="space-y-6 py-8 w-full">
@@ -421,7 +487,7 @@ export default function Home() {
                           <User className="w-5 h-5 text-[#f0abfc]" />
                         </div>
                       ) : (
-                        <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-[#d946ef] to-[#8b5cf6] flex items-center justify-center shrink-0 shadow-[0_0_12px_rgba(217,70,239,0.5)]">
+                        <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-[#d946ef] to-[#8b5cf6] flex items-center justify-center shrink-0">
                           <Sparkles className="w-4 h-4 text-white" />
                         </div>
                       )}
@@ -440,52 +506,6 @@ export default function Home() {
               )}
             </div>
           </div>
-
-          {messages.length > 0 && (
-            <div className="p-6 pb-8">
-              <div className="max-w-2xl mx-auto relative">
-                <form
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    handleSubmit();
-                  }}
-                  className="bg-[#15092a]/95 backdrop-blur-md border border-[#d946ef]/50 focus-within:border-[#f0abfc] rounded-full flex items-center px-5 py-2.5 shadow-[0_0_25px_rgba(217,70,239,0.3)] transition-all"
-                >
-                  <button 
-                    type="button" 
-                    onClick={() => setMessages([])}
-                    className="text-[#d8b4fe] hover:text-white p-1.5 transition-colors"
-                    title="Nova conversa"
-                  >
-                    <Plus className="w-5 h-5" />
-                  </button>
-
-                  <input
-                    type="text"
-                    value={input}
-                    onChange={(e) => setInput(e.target.value)}
-                    placeholder="Peça à Build IA para continuar construindo..."
-                    className="bg-transparent flex-1 focus:outline-none text-[#e3e3e3] placeholder-[#a78bfa]/70 text-sm px-3"
-                  />
-
-                  <div className="flex items-center gap-2">
-                    <button type="button" className="text-[#d8b4fe] hover:text-white p-1.5 transition-colors">
-                      <Mic className="w-4 h-4" />
-                    </button>
-                    {input.trim() && (
-                      <button
-                        type="submit"
-                        disabled={loading}
-                        className="p-2 bg-gradient-to-r from-[#d946ef] to-[#8b5cf6] text-white rounded-full transition-colors shadow-[0_0_12px_rgba(217,70,239,0.5)]"
-                      >
-                        <Send className="w-4 h-4" />
-                      </button>
-                    )}
-                  </div>
-                </form>
-              </div>
-            </div>
-          )}
         </main>
       )}
     </div>
