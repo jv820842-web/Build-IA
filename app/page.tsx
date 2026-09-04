@@ -16,8 +16,10 @@ import {
   Terminal,
   X,
   CreditCard,
-  LogOut,
-  RotateCcw
+  LogIn,
+  RotateCcw,
+  BookOpen,
+  Lightbulb
 } from 'lucide-react';
 
 interface Message {
@@ -31,6 +33,7 @@ export default function Home() {
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPricingModal, setShowPricingModal] = useState(false);
+  const [showFeaturesModal, setShowFeaturesModal] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<'free' | 'pro'>('free');
 
   const handleSubmit = async (textToSend?: string) => {
@@ -61,9 +64,13 @@ export default function Home() {
     }
   };
 
-  const handleLogout = () => {
-    setMessages([]);
-    setShowLanding(true);
+  const handleLogin = () => {
+    setShowLanding(false);
+  };
+
+  const loadExamplePrompt = (promptText: string) => {
+    setShowLanding(false);
+    setInput(promptText);
   };
 
   return (
@@ -71,6 +78,47 @@ export default function Home() {
       {/* Background Mesh Gradient */}
       <div className="absolute top-[-10%] left-1/2 -translate-x-1/2 w-[1000px] h-[650px] bg-gradient-to-tr from-[#d946ef] via-[#8b5cf6] to-[#3b82f6] opacity-35 blur-[160px] pointer-events-none rounded-full" />
       <div className="absolute bottom-[5%] left-1/2 -translate-x-1/2 w-[900px] h-[500px] bg-gradient-to-r from-[#ec4899] via-[#a855f7] to-[#6366f1] opacity-30 blur-[170px] pointer-events-none rounded-full" />
+
+      {/* Modal de Recursos */}
+      {showFeaturesModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-md animate-in fade-in duration-200">
+          <div className="bg-[#120724] border border-[#d946ef]/40 rounded-3xl p-6 md:p-8 max-w-2xl w-full relative shadow-[0_0_50px_rgba(217,70,239,0.3)]">
+            <button 
+              onClick={() => setShowFeaturesModal(false)}
+              className="absolute top-5 right-5 p-2 text-[#d8b4fe] hover:text-white bg-white/5 hover:bg-white/10 rounded-full transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <div className="text-center mb-8">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#d946ef]/20 border border-[#d946ef]/40 text-[#f0abfc] text-xs font-semibold uppercase mb-3">
+                <BookOpen className="w-3.5 h-3.5" />
+                <span>Ferramentas da Plataforma</span>
+              </div>
+              <h2 className="text-3xl font-extrabold text-white">Recursos do Build IA</h2>
+              <p className="text-[#d8b4fe] text-sm mt-1">Tudo que o motor IA oferece para agilizar o desenvolvimento.</p>
+            </div>
+
+            <div className="grid md:grid-cols-3 gap-4">
+              <div className="p-5 bg-[#1f0938] border border-[#d946ef]/30 rounded-2xl">
+                <Code2 className="w-6 h-6 text-[#f0abfc] mb-3" />
+                <h3 className="text-sm font-bold text-white mb-1">Geração de Código Clean</h3>
+                <p className="text-xs text-[#d8b4fe]">Geração automática em Next.js, React e Tailwind CSS.</p>
+              </div>
+              <div className="p-5 bg-[#1f0938] border border-[#d946ef]/30 rounded-2xl">
+                <Zap className="w-6 h-6 text-[#f0abfc] mb-3" />
+                <h3 className="text-sm font-bold text-white mb-1">Execução Instantânea</h3>
+                <p className="text-xs text-[#d8b4fe]">Latência mínima com o modelo Build IA 3.6 Flash.</p>
+              </div>
+              <div className="p-5 bg-[#1f0938] border border-[#d946ef]/30 rounded-2xl">
+                <Layers className="w-6 h-6 text-[#f0abfc] mb-3" />
+                <h3 className="text-sm font-bold text-white mb-1">Componentes UI</h3>
+                <p className="text-xs text-[#d8b4fe]">Layouts modernos, responsivos e prontos para publicar.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Modal de Planos */}
       {showPricingModal && (
@@ -163,7 +211,7 @@ export default function Home() {
         </div>
       )}
 
-      {/* Header com Planos e Botão Sair mantido */}
+      {/* Header Superior Limpo com Botões Úteis */}
       <header className="w-full max-w-7xl mx-auto flex items-center justify-between px-6 py-4 z-20 sticky top-0 bg-[#07020d]/80 backdrop-blur-md border-b border-white/5">
         <div 
           className="flex items-center gap-2.5 cursor-pointer" 
@@ -175,6 +223,26 @@ export default function Home() {
           <span className="text-xl font-extrabold tracking-tight text-white">Build IA</span>
         </div>
 
+        {/* Botões do Meio (Recursos e Exemplos) */}
+        <div className="hidden md:flex items-center gap-2">
+          <button 
+            onClick={() => setShowFeaturesModal(true)}
+            className="flex items-center gap-1.5 text-xs text-[#d8b4fe] hover:text-white bg-white/5 hover:bg-white/10 px-3.5 py-2 rounded-xl transition-colors border border-white/10"
+          >
+            <BookOpen className="w-3.5 h-3.5 text-[#f0abfc]" />
+            <span>Recursos</span>
+          </button>
+
+          <button 
+            onClick={() => loadExamplePrompt("Crie uma Dashboard financeira interativa com gráficos")}
+            className="flex items-center gap-1.5 text-xs text-[#d8b4fe] hover:text-white bg-white/5 hover:bg-white/10 px-3.5 py-2 rounded-xl transition-colors border border-white/10"
+          >
+            <Lightbulb className="w-3.5 h-3.5 text-[#f0abfc]" />
+            <span>Exemplos</span>
+          </button>
+        </div>
+
+        {/* Botões de Ação Direita */}
         <div className="flex items-center gap-3">
           <button 
             onClick={() => setShowPricingModal(true)}
@@ -184,13 +252,24 @@ export default function Home() {
             <span>Planos</span>
           </button>
 
-          {/* Botão Sair mantido no estilo original */}
+          {!showLanding && (
+            <button 
+              onClick={() => setMessages([])}
+              className="flex items-center gap-1.5 text-xs text-[#d8b4fe] hover:text-white bg-white/5 hover:bg-white/10 px-3 py-2 rounded-xl transition-colors border border-white/10"
+              title="Nova conversa"
+            >
+              <RotateCcw className="w-3.5 h-3.5" />
+              <span>Limpar</span>
+            </button>
+          )}
+
+          {/* Botão Entrar */}
           <button 
-            onClick={handleLogout}
+            onClick={handleLogin}
             className="bg-white hover:bg-slate-100 text-slate-900 px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shadow-sm"
           >
-            <LogOut className="w-3.5 h-3.5" />
-            <span>Sair</span>
+            <LogIn className="w-3.5 h-3.5" />
+            <span>Entrar</span>
           </button>
         </div>
       </header>
@@ -228,7 +307,7 @@ export default function Home() {
                 onClick={() => setShowPricingModal(true)}
                 className="bg-white/5 hover:bg-white/10 text-[#d8b4fe] border border-white/10 px-6 py-4 rounded-2xl text-base font-medium transition-all"
               >
-                Ver Planos ($ 5,99)
+                Ver Planos
               </button>
             </div>
           </main>
