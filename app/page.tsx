@@ -21,8 +21,7 @@ import {
   Bot,
   Layers,
   CheckCircle2,
-  Terminal,
-  Wand2
+  Terminal
 } from 'lucide-react';
 
 interface Message {
@@ -61,7 +60,7 @@ export default function Home() {
       ]);
     } catch (error) {
       console.error(error);
-    } flex {
+    } finally {
       setLoading(false);
     }
   };
@@ -202,7 +201,7 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Seção Preços (Atualizado para $5,99/mês sem checkout) */}
+        {/* Seção Preços ($ 5,99 / mês e Acessar Pro Studio sem redirecionamento para pagamento) */}
         <section id="precos" className="max-w-5xl mx-auto w-full py-20 border-t border-[#2a1249] z-10">
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold text-white">Planos e Preços</h2>
@@ -433,34 +432,34 @@ export default function Home() {
         </div>
       )}
 
-      {/* Área Principal de Chat (Design Chamativo) */}
+      {/* Área Principal de Chat (Design Chamativo com tom mais claro e roxo bonito) */}
       <main className="flex-1 flex flex-col h-full relative z-10">
         <div className="flex-1 overflow-y-auto px-4 flex flex-col items-center justify-center">
           <div className="max-w-2xl w-full">
             {messages.length === 0 ? (
               <div className="text-center my-auto pb-8 flex flex-col items-center">
                 {/* Ícone de Destaque Animado */}
-                <div className="mb-6 p-4 bg-gradient-to-b from-[#2a1249] to-[#170929] rounded-2xl border border-[#a855f7]/40 shadow-[0_0_30px_rgba(168,85,247,0.3)]">
-                  <Sparkles className="w-10 h-10 text-[#c084fc] animate-pulse" />
+                <div className="mb-6 p-4 bg-gradient-to-b from-[#3b1768] to-[#1e0b38] rounded-2xl border border-[#c084fc]/50 shadow-[0_0_35px_rgba(168,85,247,0.4)]">
+                  <Sparkles className="w-10 h-10 text-[#d8b4fe] animate-pulse" />
                 </div>
 
-                {/* Título Chamativo em Gradiente Neon */}
+                {/* Título Chamativo em Gradiente Roxo Claro / Neon */}
                 <h1 className="text-4xl md:text-5xl font-bold tracking-tight text-white mb-3">
                   Ative sempre que <br />
-                  <span className="bg-gradient-to-r from-[#c084fc] via-[#a855f7] to-[#e879f9] bg-clip-text text-transparent">
+                  <span className="bg-gradient-to-r from-[#e879f9] via-[#c084fc] to-[#a855f7] bg-clip-text text-transparent">
                     precisar criar.
                   </span>
                 </h1>
 
-                <p className="text-[#a78bfa] text-base max-w-md mt-2 mb-8">
+                <p className="text-[#d8b4fe] text-base max-w-md mt-2 mb-8">
                   O que você gostaria de construir ou perguntar para o <strong className="text-white">Build IA</strong> hoje?
                 </p>
 
-                {/* Sugestões Rápidas de Prompt */}
+                {/* Sugestões Rápidas de Prompt com visual roxo elegante */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3 w-full max-w-lg">
                   <button 
                     onClick={() => handleSubmit("Crie uma Landing Page moderna com Tailwind CSS")}
-                    className="p-3.5 bg-[#170929]/80 hover:bg-[#230d3d] border border-[#2a1249] hover:border-[#a855f7]/60 rounded-xl text-left transition-all text-xs text-[#e9d5ff] flex items-center gap-2.5 group"
+                    className="p-3.5 bg-[#1e0b38]/90 hover:bg-[#2a1249] border border-[#3b1768] hover:border-[#c084fc]/70 rounded-xl text-left transition-all text-xs text-[#f3e8ff] flex items-center gap-2.5 group shadow-sm"
                   >
                     <Code2 className="w-4 h-4 text-[#c084fc] group-hover:scale-110 transition-transform" />
                     <span>Criar Landing Page em Next.js</span>
@@ -468,7 +467,7 @@ export default function Home() {
 
                   <button 
                     onClick={() => handleSubmit("Escreva uma função em Python para processar dados")}
-                    className="p-3.5 bg-[#170929]/80 hover:bg-[#230d3d] border border-[#2a1249] hover:border-[#a855f7]/60 rounded-xl text-left transition-all text-xs text-[#e9d5ff] flex items-center gap-2.5 group"
+                    className="p-3.5 bg-[#1e0b38]/90 hover:bg-[#2a1249] border border-[#3b1768] hover:border-[#c084fc]/70 rounded-xl text-left transition-all text-xs text-[#f3e8ff] flex items-center gap-2.5 group shadow-sm"
                   >
                     <Terminal className="w-4 h-4 text-[#c084fc] group-hover:scale-110 transition-transform" />
                     <span>Gerar script em Python</span>
@@ -504,7 +503,7 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Input Bar */}
+        {/* Barra de Input */}
         <div className="p-6 pb-12">
           <div className="max-w-2xl mx-auto relative">
             <form
@@ -512,7 +511,7 @@ export default function Home() {
                 e.preventDefault();
                 handleSubmit();
               }}
-              className="bg-[#170929]/90 backdrop-blur-md border border-[#2a1249] focus-within:border-[#a855f7] rounded-full flex items-center px-5 py-2.5 shadow-[0_0_25px_rgba(0,0,0,0.5)] transition-all"
+              className="bg-[#1e0b38]/90 backdrop-blur-md border border-[#3b1768] focus-within:border-[#c084fc] rounded-full flex items-center px-5 py-2.5 shadow-[0_0_25px_rgba(0,0,0,0.5)] transition-all"
             >
               <button 
                 type="button" 
