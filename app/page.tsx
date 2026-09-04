@@ -19,7 +19,10 @@ import {
   Zap,
   Code2,
   Bot,
-  Layers
+  Layers,
+  CheckCircle2,
+  HelpCircle,
+  CreditCard
 } from 'lucide-react';
 
 interface Message {
@@ -63,13 +66,21 @@ export default function Home() {
     }
   };
 
+  const scrollToSection = (id: string) => {
+    const element = document.getElementById(id);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
   if (showLanding) {
     return (
       <div className="min-h-screen bg-[#090510] text-[#e3e3e3] font-sans antialiased relative overflow-x-hidden flex flex-col justify-between p-6">
         <div className="absolute top-[20%] left-1/2 -translate-x-1/2 w-[600px] h-[400px] bg-gradient-to-r from-[#9333ea] via-[#a855f7] to-[#c084fc] opacity-25 blur-[140px] pointer-events-none rounded-full" />
         <div className="absolute bottom-[-10%] left-[10%] w-[500px] h-[500px] bg-[#6b21a8] opacity-20 blur-[160px] pointer-events-none rounded-full" />
 
-        <header className="max-w-6xl mx-auto w-full flex items-center justify-between py-4 z-10">
+        {/* Header Fixo/Navegação Funcional */}
+        <header className="max-w-6xl mx-auto w-full flex items-center justify-between py-4 z-10 sticky top-0 bg-[#090510]/80 backdrop-blur-md">
           <div className="flex items-center gap-2">
             <div className="p-1.5 bg-[#9333ea]/20 border border-[#9333ea]/40 rounded-lg">
               <Cpu className="w-5 h-5 text-[#c084fc]" />
@@ -77,10 +88,26 @@ export default function Home() {
             <span className="text-xl font-bold tracking-tight text-white">Build IA</span>
           </div>
 
+          {/* Links com acionamento por clique */}
           <nav className="hidden md:flex items-center gap-8 text-sm text-[#a1a1aa]">
-            <a href="#recursos" className="hover:text-white transition-colors">Recursos</a>
-            <a href="#como-funciona" className="hover:text-white transition-colors">Como funciona</a>
-            <a href="#precos" className="hover:text-white transition-colors">Preços</a>
+            <button 
+              onClick={() => scrollToSection('recursos')} 
+              className="hover:text-[#c084fc] transition-colors cursor-pointer"
+            >
+              Recursos
+            </button>
+            <button 
+              onClick={() => scrollToSection('como-funciona')} 
+              className="hover:text-[#c084fc] transition-colors cursor-pointer"
+            >
+              Como funciona
+            </button>
+            <button 
+              onClick={() => scrollToSection('precos')} 
+              className="hover:text-[#c084fc] transition-colors cursor-pointer"
+            >
+              Preços
+            </button>
           </nav>
 
           <div className="flex items-center gap-4">
@@ -99,6 +126,7 @@ export default function Home() {
           </div>
         </header>
 
+        {/* Hero Section */}
         <main className="max-w-4xl mx-auto w-full text-center my-auto py-16 z-10 flex flex-col items-center">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#9333ea]/10 border border-[#9333ea]/30 text-[#c084fc] text-xs font-medium uppercase tracking-wider mb-8">
             <Sparkles className="w-3.5 h-3.5" />
@@ -125,7 +153,97 @@ export default function Home() {
           </button>
         </main>
 
-        <footer className="text-center text-xs text-[#52525b] py-4 z-10">
+        {/* Seção Recursos */}
+        <section id="recursos" className="max-w-5xl mx-auto w-full py-20 border-t border-[#1f0d36] z-10">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold text-white">Recursos do Build IA</h2>
+            <p className="text-[#a1a1aa] mt-2">Tudo o que você precisa para sair da ideia para a produção.</p>
+          </div>
+          <div className="grid md:grid-cols-3 gap-6">
+            <div className="p-6 bg-[#120721] rounded-2xl border border-[#2a1249]">
+              <Code2 className="w-8 h-8 text-[#c084fc] mb-4" />
+              <h3 className="text-lg font-semibold text-white mb-2">Geração de Código Clean</h3>
+              <p className="text-sm text-[#a78bfa]">Código otimizado em Next.js, React e TypeScript com boas práticas integradas.</p>
+            </div>
+            <div className="p-6 bg-[#120721] rounded-2xl border border-[#2a1249]">
+              <Zap className="w-8 h-8 text-[#c084fc] mb-4" />
+              <h3 className="text-lg font-semibold text-white mb-2">Respostas Ultrarrápidas</h3>
+              <p className="text-sm text-[#a78bfa]">Motor Build IA 3.6 Flash projetado para baixíssima latência na criação.</p>
+            </div>
+            <div className="p-6 bg-[#120721] rounded-2xl border border-[#2a1249]">
+              <Layers className="w-8 h-8 text-[#c084fc] mb-4" />
+              <h3 className="text-lg font-semibold text-white mb-2">Interfaces Reativas</h3>
+              <p className="text-sm text-[#a78bfa]">Componentes UI elegantes, responsivos e prontos para publicar na nuvem.</p>
+            </div>
+          </div>
+        </section>
+
+        {/* Seção Como Funciona */}
+        <section id="como-funciona" className="max-w-5xl mx-auto w-full py-20 border-t border-[#1f0d36] z-10">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold text-white">Como Funciona</h2>
+            <p className="text-[#a1a1aa] mt-2">Construa em apenas 3 passos simples.</p>
+          </div>
+          <div className="grid md:grid-cols-3 gap-8 text-center">
+            <div className="flex flex-col items-center">
+              <div className="w-12 h-12 rounded-full bg-[#2a1249] text-[#c084fc] font-bold flex items-center justify-center mb-4 border border-[#9333ea]">1</div>
+              <h3 className="font-semibold text-white mb-1">Descreva seu Projeto</h3>
+              <p className="text-sm text-[#a78bfa]">Digite o que você quer construir em português simples.</p>
+            </div>
+            <div className="flex flex-col items-center">
+              <div className="w-12 h-12 rounded-full bg-[#2a1249] text-[#c084fc] font-bold flex items-center justify-center mb-4 border border-[#9333ea]">2</div>
+              <h3 className="font-semibold text-white mb-1">Processamento IA</h3>
+              <p className="text-sm text-[#a78bfa]">A IA estrutura as telas, lógica e componentes da aplicação.</p>
+            </div>
+            <div className="flex flex-col items-center">
+              <div className="w-12 h-12 rounded-full bg-[#2a1249] text-[#c084fc] font-bold flex items-center justify-center mb-4 border border-[#9333ea]">3</div>
+              <h3 className="font-semibold text-white mb-1">Publique com 1 Clique</h3>
+              <p className="text-sm text-[#a78bfa]">Exporte seu código ou coloque no ar via Vercel instantaneamente.</p>
+            </div>
+          </div>
+        </section>
+
+        {/* Seção Preços */}
+        <section id="precos" className="max-w-5xl mx-auto w-full py-20 border-t border-[#1f0d36] z-10">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold text-white">Planos e Preços</h2>
+            <p className="text-[#a1a1aa] mt-2">Escolha o plano ideal para suas necessidades.</p>
+          </div>
+          <div className="grid md:grid-cols-2 gap-8 max-w-3xl mx-auto">
+            <div className="p-8 bg-[#120721] rounded-2xl border border-[#2a1249] flex flex-col justify-between">
+              <div>
+                <h3 className="text-xl font-bold text-white">Starter</h3>
+                <p className="text-3xl font-extrabold text-[#c084fc] my-4">Grátis</p>
+                <ul className="space-y-3 text-sm text-[#a78bfa] mb-6">
+                  <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-[#c084fc]" /> Acesso ao Build IA 3.6 Flash</li>
+                  <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-[#c084fc]" /> Conversas e projetos ilimitados</li>
+                  <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-[#c084fc]" /> Exportação de código</li>
+                </ul>
+              </div>
+              <button onClick={() => setShowLanding(false)} className="w-full py-2.5 bg-[#2a1249] hover:bg-[#3b1768] text-white font-medium rounded-xl transition-colors">
+                Acessar Agora
+              </button>
+            </div>
+
+            <div className="p-8 bg-[#170929] rounded-2xl border border-[#a855f7] relative shadow-[0_0_20px_rgba(168,85,247,0.2)] flex flex-col justify-between">
+              <span className="absolute -top-3 right-6 bg-[#a855f7] text-white text-[10px] font-bold px-3 py-0.5 rounded-full uppercase tracking-wider">Popular</span>
+              <div>
+                <h3 className="text-xl font-bold text-white">Pro Studio</h3>
+                <p className="text-3xl font-extrabold text-[#c084fc] my-4">R$ 49 <span className="text-sm font-normal text-[#a1a1aa]">/mês</span></p>
+                <ul className="space-y-3 text-sm text-[#a78bfa] mb-6">
+                  <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-[#c084fc]" /> Recursos do plano Starter</li>
+                  <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-[#c084fc]" /> Prioridade de resposta</li>
+                  <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-[#c084fc]" /> Suporte direto e integração Github</li>
+                </ul>
+              </div>
+              <button onClick={() => setShowLanding(false)} className="w-full py-2.5 bg-[#a855f7] hover:bg-[#9333ea] text-white font-medium rounded-xl transition-colors">
+                Assinar Pro
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <footer className="text-center text-xs text-[#52525b] py-6 border-t border-[#1f0d36] z-10">
           © Build IA Studio. Todos os direitos reservados.
         </footer>
       </div>
@@ -190,7 +308,7 @@ export default function Home() {
         </div>
       </aside>
 
-      {/* Painel Lateral com Fundo Roxo Clarinho (Cor Respondente às Fotos) */}
+      {/* Painel Lateral */}
       {activeTab !== 'chat' && (
         <div className="w-80 bg-[#120721] border-r border-[#2a1249] z-20 flex flex-col p-5 animate-in slide-in-from-left duration-200">
           <div className="flex items-center justify-between pb-4 border-b border-[#2a1249]">
@@ -206,10 +324,8 @@ export default function Home() {
           </div>
 
           <div className="flex-1 overflow-y-auto py-4 space-y-4">
-            {/* Aba de Recursos Expandida com Mais Detalhes */}
             {activeTab === 'apps' && (
               <div className="space-y-4">
-                {/* Bloco de Destaque / Modelo Integrado */}
                 <div className="p-3.5 bg-[#1b0b30] rounded-xl border border-[#3b1768] shadow-sm">
                   <div className="flex items-center gap-2 mb-1.5">
                     <Zap className="w-4 h-4 text-[#d8b4fe]" />
@@ -220,7 +336,6 @@ export default function Home() {
                   </p>
                 </div>
 
-                {/* Recursos Adicionais do Modelo */}
                 <div className="space-y-2 pt-2">
                   <p className="text-xs font-semibold uppercase tracking-wider text-[#9333ea] px-1">Recursos Ativos</p>
                   
@@ -251,7 +366,6 @@ export default function Home() {
               </div>
             )}
 
-            {/* Outras Abas */}
             {activeTab === 'search' && (
               <div className="space-y-4">
                 <input
