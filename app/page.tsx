@@ -122,7 +122,7 @@ export default function Home() {
       <div className="absolute top-[-10%] left-1/2 -translate-x-1/2 w-[1000px] h-[650px] bg-gradient-to-tr from-[#d946ef] via-[#8b5cf6] to-[#3b82f6] opacity-35 blur-[160px] pointer-events-none rounded-full" />
       <div className="absolute bottom-[5%] left-1/2 -translate-x-1/2 w-[900px] h-[500px] bg-gradient-to-r from-[#ec4899] via-[#a855f7] to-[#6366f1] opacity-30 blur-[170px] pointer-events-none rounded-full" />
 
-      {/* MODAL PLANOS E PREÇOS */}
+      {/* MODAL PLANOS E PREÇOS (R$ 5,99) */}
       {showPricingModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
           <div className="bg-[#120724] border border-[#d946ef]/40 rounded-3xl p-6 md:p-8 max-w-4xl w-full max-h-[90vh] overflow-y-auto relative shadow-[0_0_60px_rgba(217,70,239,0.35)]">
@@ -140,7 +140,7 @@ export default function Home() {
               </div>
               <h2 className="text-3xl md:text-4xl font-extrabold text-white">Desbloqueie todo o poder da IA</h2>
               <p className="text-[#d8b4fe] text-sm mt-2 max-w-md mx-auto">
-                Evolua da versão gratuita para a versão Pro Studio e crie projetos sem limites de velocidade.
+                Evolua da versão gratuita para a versão Pro Studio e crie projetos sem limites.
               </p>
             </div>
 
@@ -176,7 +176,7 @@ export default function Home() {
                 </button>
               </div>
 
-              {/* Plano PRO */}
+              {/* Plano PRO R$ 5,99 */}
               <div className="bg-gradient-to-b from-[#250d43] to-[#16072b] border-2 border-[#d946ef] rounded-2xl p-6 flex flex-col justify-between relative shadow-[0_0_30px_rgba(217,70,239,0.3)]">
                 <div className="absolute -top-3 right-6 bg-gradient-to-r from-amber-400 to-amber-600 text-black font-extrabold text-[10px] px-3 py-1 rounded-full uppercase tracking-wider shadow-md">
                   Recomendado
@@ -187,13 +187,13 @@ export default function Home() {
                     Pro Studio
                     <Crown className="w-4 h-4 text-amber-400" />
                   </h3>
-                  <p className="text-xs text-[#d8b4fe] mb-4">Para criadores, desenvolvedores e empresas</p>
-                  <div className="text-3xl font-black text-white mb-6">R$ 49 <span className="text-xs font-normal text-[#d8b4fe]">/mês</span></div>
+                  <p className="text-xs text-[#d8b4fe] mb-4">Para criadores e desenvolvedores</p>
+                  <div className="text-3xl font-black text-white mb-6">R$ 5,99 <span className="text-xs font-normal text-[#d8b4fe]">/mês</span></div>
 
                   <ul className="space-y-3 text-xs text-[#e3e3e3] mb-6">
                     <li className="flex items-center gap-2">
                       <CheckCircle2 className="w-4 h-4 text-[#f0abfc]" />
-                      <span className="font-semibold text-white">Acesso ao Build IA Pro 4.0 & Claude 3.5</span>
+                      <span className="font-semibold text-white">Acesso ao Build IA Pro 4.0 Turbo</span>
                     </li>
                     <li className="flex items-center gap-2">
                       <CheckCircle2 className="w-4 h-4 text-[#f0abfc]" />
@@ -219,7 +219,7 @@ export default function Home() {
                     <Loader2 className="w-4 h-4 animate-spin" />
                   ) : (
                     <>
-                      <span>Assinar Pro Studio</span>
+                      <span>Assinar por R$ 5,99/mês</span>
                       <ArrowRight className="w-4 h-4" />
                     </>
                   )}
@@ -409,12 +409,12 @@ export default function Home() {
 
         {/* Botões Lado Direito */}
         <div className="flex items-center gap-3">
-          {/* BOTÃO SAIR: SÓ EXIBIDO DURANTE O CHAT */}
+          {/* O BOTÃO SAIR SÓ APARECE SE ESTIVER NO CHAT (mensagens > 0) */}
           {messages.length > 0 && (
             <button 
               onClick={() => setMessages([])}
               className="flex items-center gap-1.5 bg-red-500/10 hover:bg-red-500/20 text-red-300 border border-red-500/30 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer"
-              title="Sair da conversa"
+              title="Sair do Chat"
             >
               <LogOut className="w-3.5 h-3.5" />
               <span>Sair</span>
