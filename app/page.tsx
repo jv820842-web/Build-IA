@@ -16,6 +16,7 @@ import {
   Terminal,
   X,
   CreditCard,
+  LogOut,
   RotateCcw
 } from 'lucide-react';
 
@@ -58,6 +59,11 @@ export default function Home() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleLogout = () => {
+    setMessages([]);
+    setShowLanding(true);
   };
 
   return (
@@ -157,7 +163,7 @@ export default function Home() {
         </div>
       )}
 
-      {/* Header Superior Limpo com Botão Planos */}
+      {/* Header com Planos e Botão Sair mantido */}
       <header className="w-full max-w-7xl mx-auto flex items-center justify-between px-6 py-4 z-20 sticky top-0 bg-[#07020d]/80 backdrop-blur-md border-b border-white/5">
         <div 
           className="flex items-center gap-2.5 cursor-pointer" 
@@ -178,16 +184,14 @@ export default function Home() {
             <span>Planos</span>
           </button>
 
-          {!showLanding && (
-            <button 
-              onClick={() => setMessages([])}
-              className="flex items-center gap-1.5 text-xs text-[#d8b4fe] hover:text-white bg-white/5 hover:bg-white/10 px-3.5 py-2 rounded-xl transition-colors border border-white/10"
-              title="Nova conversa"
-            >
-              <RotateCcw className="w-3.5 h-3.5" />
-              <span>Limpar</span>
-            </button>
-          )}
+          {/* Botão Sair mantido no estilo original */}
+          <button 
+            onClick={handleLogout}
+            className="bg-white hover:bg-slate-100 text-slate-900 px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shadow-sm"
+          >
+            <LogOut className="w-3.5 h-3.5" />
+            <span>Sair</span>
+          </button>
         </div>
       </header>
 
