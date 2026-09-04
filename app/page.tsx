@@ -5,13 +5,15 @@ import {
   Sparkles, 
   Send, 
   User, 
-  Menu, 
   Plus, 
   Search, 
   Compass, 
   Grid, 
   Settings, 
-  Mic
+  Mic,
+  X,
+  MessageSquare,
+  Trash2
 } from 'lucide-react';
 
 interface Message {
@@ -23,7 +25,8 @@ export default function Home() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<'chat' | 'search' | 'explore' | 'apps' | 'settings'>('chat');
+  const [searchQuery, setSearchQuery] = useState('');
 
   const handleSubmit = async (textToSend?: string) => {
     const query = textToSend || input;
@@ -55,63 +58,166 @@ export default function Home() {
 
   return (
     <div className="flex h-screen bg-[#0e0f12] text-[#e3e3e3] font-sans antialiased overflow-hidden relative">
-      {/* Luz Radial Suave Centralizada no Fundo (Efeito Aurora Gemini) */}
+      {/* Luz Radial no Fundo */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[500px] bg-gradient-to-tr from-[#1e295d] via-[#111e40] to-transparent opacity-40 blur-[130px] pointer-events-none rounded-full" />
 
-      {/* Sidebar Ícones/Minimizada */}
-      <aside className={`${sidebarOpen ? 'w-64' : 'w-16'} transition-all duration-300 bg-[#131314]/80 backdrop-blur-md flex flex-col justify-between p-3 select-none z-20 border-r border-[#1e1f20]`}>
+      {/* Sidebar Lateral */}
+      <aside className="w-16 bg-[#131314]/90 backdrop-blur-md flex flex-col justify-between p-3 select-none z-20 border-r border-[#1e1f20]">
         <div className="flex flex-col items-center space-y-6">
           <button 
-            onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="p-2 hover:bg-[#282a2c] rounded-full text-[#c4c7c5] transition-colors"
+            onClick={() => setActiveTab('chat')}
+            className={`p-2 rounded-full transition-colors ${activeTab === 'chat' ? 'bg-[#282a2c] text-[#a8c7fa]' : 'text-[#c4c7c5] hover:bg-[#282a2c]'}`}
+            title="Página Principal"
           >
-            <Sparkles className="w-5 h-5 text-[#a8c7fa]" />
+            <Sparkles className="w-5 h-5" />
           </button>
 
           <div className="flex flex-col gap-4 items-center w-full">
             <button 
-              onClick={() => setMessages([])}
+              onClick={() => {
+                setMessages([]);
+                setActiveTab('chat');
+              }}
               className="p-2.5 hover:bg-[#282a2c] rounded-full text-[#c4c7c5] transition-colors"
               title="Nova conversa"
             >
               <Plus className="w-5 h-5" />
             </button>
 
-            <button className="p-2.5 hover:bg-[#282a2c] rounded-full text-[#c4c7c5] transition-colors">
+            <button 
+              onClick={() => setActiveTab(activeTab === 'search' ? 'chat' : 'search')}
+              className={`p-2.5 rounded-full transition-colors ${activeTab === 'search' ? 'bg-[#282a2c] text-[#a8c7fa]' : 'text-[#c4c7c5] hover:bg-[#282a2c]'}`}
+              title="Pesquisar conversas"
+            >
               <Search className="w-5 h-5" />
             </button>
 
-            <button className="p-2.5 hover:bg-[#282a2c] rounded-full text-[#c4c7c5] transition-colors">
+            <button 
+              onClick={() => setActiveTab(activeTab === 'explore' ? 'chat' : 'explore')}
+              className={`p-2.5 rounded-full transition-colors ${activeTab === 'explore' ? 'bg-[#282a2c] text-[#a8c7fa]' : 'text-[#c4c7c5] hover:bg-[#282a2c]'}`}
+              title="Explorar ideias"
+            >
               <Compass className="w-5 h-5" />
             </button>
 
-            <button className="p-2.5 hover:bg-[#282a2c] rounded-full text-[#c4c7c5] transition-colors">
+            <button 
+              onClick={() => setActiveTab(activeTab === 'apps' ? 'chat' : 'apps')}
+              className={`p-2.5 rounded-full transition-colors ${activeTab === 'apps' ? 'bg-[#282a2c] text-[#a8c7fa]' : 'text-[#c4c7c5] hover:bg-[#282a2c]'}`}
+              title="Recursos e Ferramentas"
+            >
               <Grid className="w-5 h-5" />
             </button>
           </div>
         </div>
 
         <div className="flex flex-col items-center gap-3">
-          <button className="p-2.5 hover:bg-[#282a2c] rounded-full text-[#c4c7c5] transition-colors">
+          <button 
+            onClick={() => setActiveTab(activeTab === 'settings' ? 'chat' : 'settings')}
+            className={`p-2.5 rounded-full transition-colors ${activeTab === 'settings' ? 'bg-[#282a2c] text-[#a8c7fa]' : 'text-[#c4c7c5] hover:bg-[#282a2c]'}`}
+            title="Configurações"
+          >
             <Settings className="w-5 h-5" />
           </button>
+          
           <div className="w-7 h-7 rounded-full bg-[#1e293b] border border-[#334155] flex items-center justify-center text-xs font-semibold text-[#a8c7fa]">
             B
           </div>
         </div>
       </aside>
 
+      {/* Painel Lateral / Modais sem necessidade de Login */}
+      {activeTab !== 'chat' && (
+        <div className="w-80 bg-[#1e1f20]/95 backdrop-blur-md border-r border-[#2e3032] z-20 flex flex-col p-4 animate-in slide-in-from-left duration-200">
+          <div className="flex items-center justify-between pb-4 border-b border-[#2e3032]">
+            <h2 className="text-base font-medium text-[#e3e3e3] capitalize">
+              {activeTab === 'search' && 'Pesquisar conversas'}
+              {activeTab === 'explore' && 'Explorar ideias'}
+              {activeTab === 'apps' && 'Recursos da IA'}
+              {activeTab === 'settings' && 'Configurações'}
+            </h2>
+            <button onClick={() => setActiveTab('chat')} className="p-1 hover:bg-[#282a2c] rounded-full text-[#8e918f]">
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+
+          <div className="flex-1 overflow-y-auto py-4">
+            {/* Pesquisar */}
+            {activeTab === 'search' && (
+              <div className="space-y-4">
+                <input
+                  type="text"
+                  placeholder="Buscar nas mensagens..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full bg-[#131314] border border-[#37393b] rounded-lg px-3 py-2 text-sm text-[#e3e3e3] focus:outline-none"
+                />
+                <div className="space-y-2">
+                  {messages.length === 0 ? (
+                    <p className="text-xs text-[#8e918f] text-center pt-4">Nenhuma conversa recente encontrada.</p>
+                  ) : (
+                    messages
+                      .filter(m => m.content.toLowerCase().includes(searchQuery.toLowerCase()))
+                      .map((m, i) => (
+                        <div key={i} className="p-2.5 bg-[#131314] rounded-lg border border-[#2e3032] text-xs text-[#c4c7c5] flex items-start gap-2">
+                          <MessageSquare className="w-4 h-4 shrink-0 text-[#8e918f] mt-0.5" />
+                          <span className="truncate">{m.content}</span>
+                        </div>
+                      ))
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Explorar */}
+            {activeTab === 'explore' && (
+              <div className="space-y-3">
+                <button 
+                  onClick={() => { handleSubmit("Me ajude a programar uma página web em Next.js"); setActiveTab('chat'); }}
+                  className="w-full p-3 bg-[#131314] hover:bg-[#282a2c] rounded-xl text-left border border-[#2e3032] transition-colors"
+                >
+                  <p className="text-xs font-medium text-[#a8c7fa]">Programação</p>
+                  <p className="text-xs text-[#c4c7c5] mt-1">Como criar páginas web modernas</p>
+                </button>
+
+                <button 
+                  onClick={() => { handleSubmit("Escreva uma história criativa sobre exploração espacial"); setActiveTab('chat'); }}
+                  className="w-full p-3 bg-[#131314] hover:bg-[#282a2c] rounded-xl text-left border border-[#2e3032] transition-colors"
+                >
+                  <p className="text-xs font-medium text-[#a8c7fa]">Escrita Criativa</p>
+                  <p className="text-xs text-[#c4c7c5] mt-1">Crie histórias e textos fictícios</p>
+                </button>
+              </div>
+            )}
+
+            {/* Recursos / Apps */}
+            {activeTab === 'apps' && (
+              <div className="space-y-2 text-xs text-[#c4c7c5]">
+                <div className="p-3 bg-[#131314] rounded-lg border border-[#2e3032]">
+                  <p className="font-medium text-[#e3e3e3]">Modelo Integrado</p>
+                  <p className="text-[#8e918f] mt-1">Gemini 3.6 Flash ativo para respostas rápidas.</p>
+                </div>
+              </div>
+            )}
+
+            {/* Configurações */}
+            {activeTab === 'settings' && (
+              <div className="space-y-4 text-xs">
+                <div className="flex items-center justify-between p-3 bg-[#131314] rounded-lg border border-[#2e3032]">
+                  <span>Limpar conversa atual</span>
+                  <button onClick={() => { setMessages([]); setActiveTab('chat'); }} className="p-1.5 bg-[#d96570]/20 text-[#d96570] hover:bg-[#d96570]/30 rounded">
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+                <p className="text-[#8e918f] px-1">Versão do sistema: Build IA 1.0.0</p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Área Principal */}
       <main className="flex-1 flex flex-col h-full relative z-10">
-        {/* Topbar com Botão Upgrade */}
-        <header className="flex items-center justify-end p-4 px-8 text-[#c4c7c5]">
-          <button className="flex items-center gap-2 bg-[#004a77] hover:bg-[#005c93] text-[#c2e7ff] text-sm px-4 py-1.5 rounded-full font-medium transition-colors">
-            <Sparkles className="w-4 h-4 fill-current" />
-            <span>Fazer upgrade</span>
-          </button>
-        </header>
-
-        {/* Área Central / Respostas */}
+        {/* Área Central de Chat */}
         <div className="flex-1 overflow-y-auto px-4 flex flex-col items-center justify-center">
           <div className="max-w-2xl w-full">
             {messages.length === 0 ? (
@@ -149,7 +255,7 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Input Bar Estilo Gemini Centralizado */}
+        {/* Campo de Entrada (Input) */}
         <div className="p-6 pb-12">
           <div className="max-w-2xl mx-auto relative">
             <form
@@ -159,7 +265,12 @@ export default function Home() {
               }}
               className="bg-[#1e1f20]/90 backdrop-blur-md border border-[#2e3032] focus-within:border-[#444746] rounded-full flex items-center px-5 py-2.5 shadow-2xl transition-all"
             >
-              <button type="button" className="text-[#8e918f] hover:text-[#e3e3e3] p-1.5 transition-colors">
+              <button 
+                type="button" 
+                onClick={() => { setMessages([]); setActiveTab('chat'); }}
+                className="text-[#8e918f] hover:text-[#e3e3e3] p-1.5 transition-colors"
+                title="Nova conversa"
+              >
                 <Plus className="w-5 h-5" />
               </button>
 
