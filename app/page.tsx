@@ -1,98 +1,208 @@
-import Link from 'next/link';
-import { Cpu, ArrowRight, Code2, Sparkles, Layers, Rocket } from 'lucide-react';
+'use client';
 
-export default function LandingPage() {
+import { useState } from 'react';
+import { 
+  Sparkles, 
+  Send, 
+  Bot, 
+  User, 
+  Menu, 
+  Plus, 
+  MessageSquare, 
+  Compass, 
+  Code, 
+  Lightbulb 
+} from 'lucide-react';
+
+interface Message {
+  role: 'user' | 'assistant';
+  content: string;
+}
+
+export default function Home() {
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [input, setInput] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+
+  const handleSubmit = async (textToSend?: string) => {
+    const query = textToSend || input;
+    if (!query.trim() || loading) return;
+
+    const userMessage: Message = { role: 'user', content: query };
+    setMessages((prev) => [...prev, userMessage]);
+    if (!textToSend) setInput('');
+    setLoading(true);
+
+    try {
+      const res = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messages: [...messages, userMessage] }),
+      });
+
+      const data = await res.json();
+      setMessages((prev) => [
+        ...prev,
+        { role: 'assistant', content: data.content },
+      ]);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-neutral-950 text-white selection:bg-purple-600 selection:text-white">
-      {/* Navbar */}
-      <nav className="fixed top-0 w-full z-50 border-b border-neutral-800/80 bg-neutral-950/70 backdrop-blur-md">
-        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Cpu className="h-7 w-7 text-purple-500" />
-            <span className="font-extrabold text-xl tracking-tight bg-gradient-to-r from-white via-neutral-200 to-purple-400 bg-clip-text text-transparent">
-              Build IA
-            </span>
-          </div>
-          <div className="hidden md:flex gap-8 text-sm font-medium text-neutral-400">
-            <a href="#recursos" className="hover:text-white transition-colors">Recursos</a>
-            <a href="#como-funciona" className="hover:text-white transition-colors">Como funciona</a>
-            <a href="#precos" className="hover:text-white transition-colors">Preços</a>
-          </div>
-          <div className="flex items-center gap-4">
-            <Link href="/dashboard" className="text-sm font-medium text-neutral-300 hover:text-white transition-colors">
-              Entrar
-            </Link>
-            <Link
-              href="/dashboard"
-              className="text-sm font-medium bg-purple-600 hover:bg-purple-500 px-4 py-2 rounded-lg transition-all shadow-lg shadow-purple-600/30"
-            >
-              Criar Agora
-            </Link>
-          </div>
-        </div>
-      </nav>
-
-      {/* Hero Section */}
-      <section className="pt-36 pb-20 px-6 max-w-7xl mx-auto text-center relative">
-        <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-purple-600/15 rounded-full blur-[120px] pointer-events-none" />
-        
-        <span className="px-4 py-1.5 rounded-full border border-purple-500/30 bg-purple-500/10 text-purple-400 text-xs font-semibold uppercase tracking-wider inline-flex items-center gap-1.5">
-          <Sparkles className="h-3.5 w-3.5" /> Transforme ideias em software em minutos
-        </span>
-        
-        <h1 className="mt-8 text-5xl md:text-7xl font-extrabold tracking-tight text-white max-w-4xl mx-auto leading-tight">
-          Crie aplicações completas descrevendo com <span className="bg-gradient-to-r from-purple-400 via-purple-300 to-blue-500 bg-clip-text text-transparent">Inteligência Artificial</span>.
-        </h1>
-        
-        <p className="mt-6 text-lg text-neutral-400 max-w-2xl mx-auto">
-          O Build IA gera código, banco de dados e interfaces completas a partir das suas instruções em texto simples.
-        </p>
-
-        <div className="mt-10 flex justify-center gap-4">
-          <Link
-            href="/dashboard"
-            className="flex items-center gap-2 bg-purple-600 hover:bg-purple-500 px-6 py-3 rounded-xl font-medium transition-all shadow-lg shadow-purple-600/30"
+    <div className="flex h-screen bg-[#131314] text-[#e3e3e3] font-sans antialiased overflow-hidden">
+      {/* Sidebar Lateral estilo Gemini */}
+      <aside className={`${sidebarOpen ? 'w-64' : 'w-16'} transition-all duration-300 bg-[#1e1f20] flex flex-col justify-between p-3 select-none`}>
+        <div>
+          <button 
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+            className="p-2.5 hover:bg-[#282a2c] rounded-full text-[#c4c7c5] transition-colors"
           >
-            Começar a criar <ArrowRight className="h-4 w-4" />
-          </Link>
+            <Menu className="w-5 h-5" />
+          </button>
+
+          <button 
+            onClick={() => setMessages([])}
+            className={`mt-4 flex items-center gap-3 bg-[#1a1a1c] hover:bg-[#282a2c] border border-[#37393b] rounded-full p-3 text-sm text-[#c4c7c5] transition-all w-full ${!sidebarOpen && 'justify-center'}`}
+          >
+            <Plus className="w-5 h-5 text-[#8e918f]" />
+            {sidebarOpen && <span>Nova conversa</span>}
+          </button>
+
+          {sidebarOpen && (
+            <div className="mt-6">
+              <p className="px-3 text-xs font-medium text-[#8e918f]">Recentes</p>
+              <div className="mt-2 space-y-1">
+                {messages.length > 0 && (
+                  <button className="flex items-center gap-3 w-full p-2.5 text-sm text-[#c4c7c5] hover:bg-[#282a2c] rounded-full truncate">
+                    <MessageSquare className="w-4 h-4 shrink-0 text-[#8e918f]" />
+                    <span className="truncate">{messages[0].content}</span>
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+      </aside>
+
+      {/* Área Principal de Chat */}
+      <main className="flex-1 flex flex-col h-full relative bg-[#131314]">
+        {/* Cabeçalho */}
+        <header className="flex items-center justify-between p-4 px-6 text-[#c4c7c5]">
+          <div className="flex items-center gap-2">
+            <span className="text-xl font-medium tracking-tight text-[#e3e3e3]">Gemini</span>
+            <span className="text-xs bg-[#282a2c] text-[#a8c7fa] px-2 py-0.5 rounded-md font-mono">3.6 Flash</span>
+          </div>
+          <div className="w-8 h-8 rounded-full bg-[#a8c7fa] text-[#042e00] flex items-center justify-center font-bold text-sm">
+            U
+          </div>
+        </header>
+
+        {/* Scroll das Mensagens ou Tela Inicial */}
+        <div className="flex-1 overflow-y-auto px-4 md:px-0">
+          <div className="max-w-3xl mx-auto py-8">
+            {messages.length === 0 ? (
+              <div className="mt-12 space-y-8">
+                <div>
+                  <h1 className="text-5xl font-medium bg-gradient-to-r from-[#4285f4] via-[#9b51e0] to-[#d96570] bg-clip-text text-transparent">
+                    Olá, usuário
+                  </h1>
+                  <h2 className="text-5xl font-medium text-[#444746] mt-2">
+                    Como posso ajudar hoje?
+                  </h2>
+                </div>
+
+                {/* Cards de sugestão estilo Gemini */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4">
+                  <button 
+                    onClick={() => handleSubmit("Crie um script TypeScript para manipular dados")}
+                    className="p-4 bg-[#1e1f20] hover:bg-[#282a2c] rounded-2xl text-left flex flex-col justify-between h-36 transition-colors border border-transparent hover:border-[#37393b]"
+                  >
+                    <span className="text-sm text-[#c4c7c5]">Crie um script TypeScript para manipular dados</span>
+                    <Code className="w-6 h-6 text-[#a8c7fa] self-end" />
+                  </button>
+
+                  <button 
+                    onClick={() => handleSubmit("Me dê ideias para planejar um projeto web")}
+                    className="p-4 bg-[#1e1f20] hover:bg-[#282a2c] rounded-2xl text-left flex flex-col justify-between h-36 transition-colors border border-transparent hover:border-[#37393b]"
+                  >
+                    <span className="text-sm text-[#c4c7c5]">Me dê ideias para planejar um projeto web</span>
+                    <Lightbulb className="w-6 h-6 text-[#a8c7fa] self-end" />
+                  </button>
+
+                  <button 
+                    onClick={() => handleSubmit("Explique o conceito de APIs REST de forma simples")}
+                    className="p-4 bg-[#1e1f20] hover:bg-[#282a2c] rounded-2xl text-left flex flex-col justify-between h-36 transition-colors border border-transparent hover:border-[#37393b]"
+                  >
+                    <span className="text-sm text-[#c4c7c5]">Explique o conceito de APIs REST de forma simples</span>
+                    <Compass className="w-6 h-6 text-[#a8c7fa] self-end" />
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-6">
+                {messages.map((msg, i) => (
+                  <div key={i} className="flex gap-4 items-start">
+                    {msg.role === 'user' ? (
+                      <div className="w-8 h-8 rounded-full bg-[#37393b] flex items-center justify-center shrink-0">
+                        <User className="w-5 h-5 text-[#c4c7c5]" />
+                      </div>
+                    ) : (
+                      <div className="w-8 h-8 rounded-full bg-[#1e1f20] flex items-center justify-center shrink-0 border border-[#37393b]">
+                        <Sparkles className="w-5 h-5 text-[#4285f4]" />
+                      </div>
+                    )}
+                    <div className="flex-1 pt-1 text-[#e3e3e3] leading-relaxed whitespace-pre-wrap">
+                      {msg.content}
+                    </div>
+                  </div>
+                ))}
+                {loading && (
+                  <div className="flex gap-4 items-center">
+                    <Sparkles className="w-5 h-5 text-[#4285f4] animate-spin" />
+                    <span className="text-sm text-[#8e918f]">Gerando resposta...</span>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
         </div>
 
-        {/* Mockup do Editor */}
-        <div className="mt-16 max-w-4xl mx-auto rounded-2xl border border-neutral-800 bg-neutral-900/50 p-4 backdrop-blur-xl shadow-2xl text-left">
-          <div className="flex items-center gap-2 border-b border-neutral-800 pb-3 mb-4">
-            <div className="h-3 w-3 rounded-full bg-red-500/80" />
-            <div className="h-3 w-3 rounded-full bg-yellow-500/80" />
-            <div className="h-3 w-3 rounded-full bg-green-500/80" />
-            <span className="text-xs text-neutral-500 ml-2">Build IA Studio</span>
-          </div>
-          <div className="bg-neutral-950 p-4 rounded-xl border border-neutral-800">
-            <p className="text-xs text-neutral-400 mb-2">Instrução para a IA:</p>
-            <p className="text-sm text-purple-300 font-mono font-medium">"Crie um SaaS de agendamento de consultas com suporte a pagamento via PIX e painel administrativo em dark mode."</p>
-          </div>
-        </div>
-      </section>
-
-      {/* Grid de Recursos */}
-      <section id="recursos" className="py-20 border-t border-neutral-900 max-w-7xl mx-auto px-6">
-        <h2 className="text-3xl font-bold text-center mb-12">Tudo o que você precisa para lançar</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          <div className="border border-neutral-800 bg-neutral-900/30 p-6 rounded-2xl">
-            <Code2 className="h-8 w-8 text-purple-400 mb-4" />
-            <h3 className="text-xl font-semibold mb-2">Geração de Código Limpo</h3>
-            <p className="text-sm text-neutral-400">Código moderno estruturado com Next.js, React e TypeScript pronto para produção.</p>
-          </div>
-          <div className="border border-neutral-800 bg-neutral-900/30 p-6 rounded-2xl">
-            <Layers className="h-8 w-8 text-blue-400 mb-4" />
-            <h3 className="text-xl font-semibold mb-2">Banco de Dados Automático</h3>
-            <p className="text-sm text-neutral-400">Modelagem automática do banco de dados e APIs REST estruturadas.</p>
-          </div>
-          <div className="border border-neutral-800 bg-neutral-900/30 p-6 rounded-2xl">
-            <Rocket className="h-8 w-8 text-emerald-400 mb-4" />
-            <h3 className="text-xl font-semibold mb-2">Deploy Instantâneo</h3>
-            <p className="text-sm text-neutral-400">Publique sua aplicação na nuvem com um clique e compartilhe o link imediatamente.</p>
+        {/* Input Bar Estilo Gemini */}
+        <div className="p-4">
+          <div className="max-w-3xl mx-auto relative">
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                handleSubmit();
+              }}
+              className="bg-[#1e1f20] border border-[#37393b] focus-within:border-[#8e918f] rounded-full flex items-center px-6 py-3 shadow-lg transition-all"
+            >
+              <input
+                type="text"
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                placeholder="Digitar algo para o Gemini..."
+                className="bg-transparent flex-1 focus:outline-none text-[#e3e3e3] placeholder-[#8e918f] text-base"
+              />
+              <button
+                type="submit"
+                disabled={!input.trim() || loading}
+                className="p-2 bg-[#a8c7fa] hover:bg-[#7cacf8] disabled:opacity-30 disabled:hover:bg-[#a8c7fa] text-[#042e00] rounded-full transition-colors ml-2"
+              >
+                <Send className="w-4 h-4" />
+              </button>
+            </form>
+            <p className="text-center text-xs text-[#8e918f] mt-2">
+              O Gemini pode apresentar informações imprecisas, inclusive sobre pessoas.
+            </p>
           </div>
         </div>
-      </section>
+      </main>
     </div>
   );
 }
